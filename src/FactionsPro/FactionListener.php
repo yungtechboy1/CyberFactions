@@ -58,7 +58,7 @@ class FactionListener implements Listener {
                                     return true;
                                 }
                                 $event->setCancelled(true);
-				$event->getPlayer()->sendMessage("[FactionsPro] This area is claimed by $faction");
+				$event->getPlayer()->sendMessage("[CyberFaction] This area is claimed by $faction");
 				return true;    
 			}
 		}
@@ -77,7 +77,7 @@ class FactionListener implements Listener {
                                     return true;
                                 }		
                                 $event->setCancelled(true);
-				$event->getPlayer()->sendMessage("[FactionsPro] This area is claimed by $faction");
+				$event->getPlayer()->sendMessage("[CyberFaction] This area is claimed by $faction");
 				return true;
 			}
 		}

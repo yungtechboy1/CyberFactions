@@ -57,17 +57,9 @@ class FactionMain extends PluginBase implements Listener {
 		$this->db->exec("CREATE TABLE IF NOT EXISTS confirm (player TEXT PRIMARY KEY COLLATE NOCASE, faction TEXT, invitedby TEXT, timestamp INT);");
 		//$this->db->exec("CREATE TABLE IF NOT EXISTS descRCV (player TEXT PRIMARY KEY, timestamp INT);");
 		//$this->db->exec("CREATE TABLE IF NOT EXISTS desc (faction TEXT PRIMARY KEY, description TEXT);");
-		$this->db->exec("CREATE TABLE IF NOT EXISTS plots(faction TEXT PRIMARY KEY, x1 INT, z1 INT, x2 INT, z2 INT);");
+		$this->db->exec("CREATE TABLE IF NOT EXISTS plots(id INTEGER PRIMARY KEY AUTOINCREMENT,faction TEXT, x1 INT, z1 INT, x2 INT, z2 INT);");
 		$this->db->exec("CREATE TABLE IF NOT EXISTS home(faction TEXT PRIMARY KEY, x INT, y INT, z INT);");
                 $this->db->exec("CREATE TABLE IF NOT EXISTS war(attacker TEXT PRIMARY KEY, defender TEXT, start INTIGER, active TEXT );");
-		
-                /*
-		 * Will implement when it only alerts you if you step into a plot for the first time
-		 * 
-		 * $task = new FactionTask($this);
-		 * $this->getServer()->getScheduler()->scheduleRepeatingTask($task, 20);
-		 * 
-		 */
 	}
 		
 	public function onCommand(CommandSender $sender, Command $command, $label, array $args) {
@@ -143,8 +135,8 @@ class FactionMain extends PluginBase implements Listener {
 		return $this->getNumberOfPlayers($faction) >= $this->prefs->get("MaxPlayersPerFaction");
 	}
 	
-	public function newPlot($faction, $x1, $z1, $x2, $z2) {
-		$stmt = $this->db->prepare("INSERT OR REPLACE INTO plots (faction, x1, z1, x2, z2) VALUES (:faction, :x1, :z1, :x2, :z2);");
+            public function newPlot($faction, $x1, $z1, $x2, $z2) {
+		$stmt = $this->db->prepare("INSERT OR REPLACE INTO plots (faction, x1, z1, x2, z2, id) VALUES (:faction, :x1, :z1, :x2, :z2, NULL);");
 		$stmt->bindValue(":faction", $faction);
 		$stmt->bindValue(":x1", $x1);
 		$stmt->bindValue(":z1", $z1);
