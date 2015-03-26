@@ -375,7 +375,7 @@ class FactionMain extends PluginBase implements Listener {
             }
         }
         
-        public function GetFactionPlots($fac, $num){
+        public function GetRandomTPArea($fac, $num){
             if (!$this->factionExists($fac)){
                 return false;
             }
@@ -386,16 +386,28 @@ class FactionMain extends PluginBase implements Listener {
             if ($factionArray['count'] == 0){
                 return false;
             }
-            if ($num !== (1 - $factionArray['count'])){
+            if ($nn == "r"){
+                $nn = rand(0, ($factionArray['count'] - 1));
+            }
+            if ($nn !== ($factionArray['count'] - 1)){
                 return false;
             }
-            $stmt = $this->db->query("SELECT * FROM plots WHERE faction = '$fac' LIMIT 1,$num;");
+            $stmt = $this->db->query("SELECT * FROM plots WHERE faction = '$fac' LIMIT 1,$nn;");
             //$n = mysql_num_rows($result);
             $factionArray = $stmt->fetchArray();
-            
-            return true;
-            
-            
+            $x = $factionArray['x1'] + rand((-1 * abs($num)) , (1 * abs($num)) );
+            $z = $factionArray['z1'] + rand((-1 * abs($num)) , (1 * abs($num)) );
+            $v3 = $this->GetLoadedLevel()->getSafeSpawn(new Vector3( $x , 0 , $z ));
+            $v = new Vector3($v3->getX(), $v3->getY(), $v3->getZ(), $v3->getLevel());
+            return $v3;
+        }
+        
+        public function GetLoadedLevel() {
+            foreach ($this->getServer()->getLevels() as $l){
+                if ($l instanceof Level){
+                    return $l;
+                }
+            }
         }
 
         public function onDisable() {
