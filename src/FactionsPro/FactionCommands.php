@@ -314,7 +314,24 @@ class FactionCommands {
                                         
 				}
 				if(count($args == 1)) {
-                                    
+                                        if (strtolower($args[0]) == "wartp"){
+                                            if (!$this->plugin->isInFaction($player)){
+                                                $sender->sendMessage("You must be in faction to use this command");
+                                                return true;
+                                            }
+                                            if (!isset($this->plugin->atwar[$this->plugin->getPlayerFaction($player)])){
+                                                $sender->sendMessage("You are Not At War!");
+                                                return true;
+                                            }
+                                            if ($this->plugin->GetRandomTPArea($this->plugin->atwar[$this->plugin->getPlayerFaction($player)], 7)){
+                                            $pos = $this->plugin->GetRandomTPArea($this->plugin->atwar[$this->plugin->getPlayerFaction($player)], 7);
+                                            $sender->teleport($pos);
+                                            $sender->sendMessage("Teleported To War Zone!");
+                                            return true;
+                                            }
+                                            return true;
+                                        }
+                                        
                                     
 					
 					//Plot

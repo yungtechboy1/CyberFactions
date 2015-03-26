@@ -343,7 +343,7 @@ class FactionMain extends PluginBase implements Listener {
             $this->wars["ATTACKS"][$attackers] = strtotime("+6 Hours");
             $this->wars["DEFENDS"][$defenders] = strtotime("+6 Hours");
             $this->atwar[$attackers] = $defenders;
-            $this->getServer()->getScheduler()->scheduleDelayedTask(new EndWar($main, $attackers), 20*60*30); //30 Mins
+            $this->getServer()->getScheduler()->scheduleDelayedTask(new EndWar($this, $attackers), 20*60*30); //30 Mins
             $this->getServer()->broadcastMessage("$attackers's Faction Has Just Declared War on $defenders's Faction!");
             $this->NotifyWar($attackers);
             $this->NotifyWar($defenders);
@@ -358,7 +358,6 @@ class FactionMain extends PluginBase implements Listener {
                 $fac2 = $this->getPlayerFaction($fac2);
             }
             echo "$fac => $fac2";
-            print_r ($this->atwar);
             if (isset($this->atwar[$fac]) && $this->atwar[$fac] == $fac2){
                 return true;
             }
@@ -375,6 +374,12 @@ class FactionMain extends PluginBase implements Listener {
             }
         }
         
+        /*
+         * Get War Time acceptible TP
+         * 
+         * @param $fac Facton To TP to
+         * @param $num Spawn Radius To Atempt to TP them to.
+         */
         public function GetRandomTPArea($fac, $num){
             if (!$this->factionExists($fac)){
                 return false;
@@ -383,23 +388,21 @@ class FactionMain extends PluginBase implements Listener {
             $stmt = $this->db->query("SELECT COUNT(*) as count FROM plots WHERE faction = '$fac';");
             //$n = mysql_num_rows($result);
             $factionArray = $stmt->fetchArray();
+            echo $fac." _ ".$factionArray['count']."--\n";
             if ($factionArray['count'] == 0){
                 return false;
             }
-            if ($nn == "r"){
-                $nn = rand(0, ($factionArray['count'] - 1));
-            }
-            if ($nn !== ($factionArray['count'] - 1)){
-                return false;
-            }
-            $stmt = $this->db->query("SELECT * FROM plots WHERE faction = '$fac' LIMIT 1,$nn;");
+            $nn = rand(0, ($factionArray['count'] - 1));
+            echo $nn;
+            $stmt1 = $this->db->query("SELECT * FROM plots WHERE faction = '$fac' LIMIT $nn,1;");
             //$n = mysql_num_rows($result);
-            $factionArray = $stmt->fetchArray();
-            $x = $factionArray['x1'] + rand((-1 * abs($num)) , (1 * abs($num)) );
-            $z = $factionArray['z1'] + rand((-1 * abs($num)) , (1 * abs($num)) );
+            $factionArray1 = $stmt1->fetchArray(SQLITE3_ASSOC);
+            echo "**".$factionArray1['x1']."--";
+            $x = $factionArray1['x1'] + rand((-1 * abs($num)) , (1 * abs($num)) );
+            $z = $factionArray1['z1'] + rand((-1 * abs($num)) , (1 * abs($num)) );
             $v3 = $this->GetLoadedLevel()->getSafeSpawn(new Vector3( $x , 0 , $z ));
-            $v = new Vector3($v3->getX(), $v3->getY(), $v3->getZ(), $v3->getLevel());
-            return $v3;
+            $v = new Vector3($v3->getX(), $v3->getY(), $v3->getZ());
+            return $v;
         }
         
         public function GetLoadedLevel() {
