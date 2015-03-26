@@ -53,13 +53,10 @@ class FactionListener implements Listener {
             }
 		if($this->plugin->pointIsInPlot($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ())) {
 			if( ($this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ())) != $this->plugin->getPlayerFaction($event->getPlayer()->getName())) {
+				$event->setCancelled(true);
 				$faction = $this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ());
-                                if ($this->plugin->AtWar($this->plugin->getPlayerFaction($event->getPlayer()->getName()),$faction)){
-                                    return true;
-                                }
-                                $event->setCancelled(true);
 				$event->getPlayer()->sendMessage("[FactionsPro] This area is claimed by $faction");
-				return true;    
+				return true;
 			}
 		}
 	}
@@ -71,12 +68,9 @@ class FactionListener implements Listener {
                 }
             }
 		if($this->plugin->pointIsInPlot($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ())) {
-                    if( ($this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ())) != $this->plugin->getPlayerFaction($event->getPlayer()->getName())) {
-                                $faction = $this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ());
-                                if ($this->plugin->AtWar($this->plugin->getPlayerFaction($event->getPlayer()->getName()),$faction)){
-                                    return true;
-                                }		
-                                $event->setCancelled(true);
+		if( ($this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ())) != $this->plugin->getPlayerFaction($event->getPlayer()->getName())) {
+				$event->setCancelled(true);
+				$faction = $this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ());
 				$event->getPlayer()->sendMessage("[FactionsPro] This area is claimed by $faction");
 				return true;
 			}
