@@ -51,11 +51,10 @@ class FactionListener implements Listener {
                     return true;
                 }
             }
-            
 		if($this->plugin->pointIsInPlot($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ())) {
 			if( ($this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ())) != $this->plugin->getPlayerFaction($event->getPlayer()->getName())) {
 				$faction = $this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ());
-                                if ($this->plugin->AtWar($faction, $this->plugin->getPlayerFaction($event->getPlayer()->getName()))){
+                                if ($this->plugin->AtWar($this->plugin->getPlayerFaction($event->getPlayer()->getName()),$faction)){
                                     return true;
                                 }
                                 $event->setCancelled(true);
@@ -72,9 +71,9 @@ class FactionListener implements Listener {
                 }
             }
 		if($this->plugin->pointIsInPlot($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ())) {
-		if( ($this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ())) != $this->plugin->getPlayerFaction($event->getPlayer()->getName())) {
+                    if( ($this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ())) != $this->plugin->getPlayerFaction($event->getPlayer()->getName())) {
                                 $faction = $this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ());
-                                if ($this->plugin->AtWar($faction, $this->plugin->getPlayerFaction($event->getPlayer()->getName()))){
+                                if ($this->plugin->AtWar($this->plugin->getPlayerFaction($event->getPlayer()->getName()),$faction)){
                                     return true;
                                 }		
                                 $event->setCancelled(true);

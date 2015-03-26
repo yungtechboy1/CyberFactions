@@ -1,6 +1,6 @@
 <?php
 
-namespace FactionsPro;
+namespace FactionsPro\War;
 
 use pocketmine\scheduler\PluginTask;
 use FactionsPro\FactionMain;
@@ -18,8 +18,7 @@ class EndWar extends PluginTask {
     }
     
     public function onRun($currentTick) {
-        $this->main->wars["ATTACKS"][$this->attackers] = strtotime("now");
-        $this->main->wars["DEFENDS"][$this->defenders] = strtotime("now");
+        unset($this->main->atwar[$facs]);
         
     }
     

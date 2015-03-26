@@ -63,7 +63,7 @@ class FactionCommands {
 							$sender->sendMessage("[FactionsPro] You may only use letters and numbers!");
 							return true;
 						}
-                                                if ($this->plugin->factionPartialName($args[1]) == false){
+                                                if (!$this->plugin->factionPartialName($args[1])){
                                                     $sender->sendMessage("Please Make Sure the Faction Name is right!");
                                                     return true;
                                                 }
@@ -124,6 +124,7 @@ class FactionCommands {
 							$sender->sendMessage("[FactionsPro] Faction is full. Please kick players to make room.");
 							return true;
 						}
+                                                //remove Player Exact
 						$invited = $this->plugin->getServer()->getPlayerExact($args[1]);
 						if($this->plugin->isInFaction($invited) == true) {
 							$sender->sendMessage("[FactionsPro] Player is currently in a faction");
@@ -299,7 +300,6 @@ class FactionCommands {
 						} else {
 							$faction = $this->plugin->getPlayerFaction(strtolower($sender->getName()));
 							$result = $this->plugin->db->query("SELECT * FROM desc WHERE faction='$faction';");
-							$array = $result->fetchArray(SQLITE3_ASSOC);
 							//$description = $array["description"];
 							$leader = $this->plugin->getLeader($faction);
 							$numPlayers = $this->plugin->getNumberOfPlayers($faction);

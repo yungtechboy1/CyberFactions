@@ -19,7 +19,7 @@ use pocketmine\block\Snow;
 use pocketmine\math\Vector3;
 use pocketmine\level\Level;
 use onebone\economyapi\EconomyAPI;
-
+use FactionsPro\War\EndWar;
 
 class FactionMain extends PluginBase implements Listener {
 	
@@ -29,8 +29,10 @@ class FactionMain extends PluginBase implements Listener {
         public $api;
 	public $tblock;
         public $wars;
-        
-	public function onEnable() {
+        public $atwar = array();
+
+
+        public function onEnable() {
 		@mkdir($this->getDataFolder());
 		
 		$this->getServer()->getPluginManager()->registerEvents(new FactionListener($this), $this);
@@ -45,8 +47,11 @@ class FactionMain extends PluginBase implements Listener {
 				"OfficerIdentifier" => '*',
 				"LeaderIdentifier" => '**',
 		));
-                $this->wars = new Config($this->getDataFolder() . "Wars.yml", CONFIG::YAML, array());
-                $this->tblock = new Config($this->getDataFolder() . "Prefs.yml", CONFIG::YAML, array());
+                $this->wars = (new Config($this->getDataFolder() . "Wars.yml", CONFIG::YAML, array(
+                    "ATTACKS" =>array(),
+                    "DEFENDS" => array()
+                )))->getAll();
+                $this->tblock = (new Config($this->getDataFolder() . "Prefs.yml", CONFIG::YAML, array()))->getAll();
 		$this->db = new \SQLite3($this->getDataFolder() . "FactionsPro.db");
 		$this->db->exec("CREATE TABLE IF NOT EXISTS master (player TEXT PRIMARY KEY COLLATE NOCASE, faction TEXT, rank TEXT);");
 		$this->db->exec("CREATE TABLE IF NOT EXISTS confirm (player TEXT PRIMARY KEY COLLATE NOCASE, faction TEXT, invitedby TEXT, timestamp INT);");
@@ -98,7 +103,10 @@ class FactionMain extends PluginBase implements Listener {
 	public function getPlayerFaction($player) {
 		$faction = $this->db->query("SELECT * FROM master WHERE player='$player';");
 		$factionArray = $faction->fetchArray(SQLITE3_ASSOC);
-		return $factionArray["faction"];
+                if (!empty($factionArray["faction"]) && $factionArray["faction"] != ""){
+                    return $factionArray["faction"];
+                }
+		return false;
 	}
 	public function getLeader($faction) {
 		$leader = $this->db->query("SELECT * FROM master WHERE faction='$faction' AND rank='Leader';");
@@ -278,10 +286,10 @@ class FactionMain extends PluginBase implements Listener {
 	}
 	
         public function pointIsInSpawn($x , $z) {
-            if ((-19.973501 < $x) < -128.724579){
+            if ((-19.973501 < $x) && ($x < -128.724579)){
                  return true;   
                 }
-            if ((-721.343689 < $z) < -843.869751){
+            if ((-721.343689 < $z) && ($x < -843.869751)){
                 return true;
             }
             return false;
@@ -292,7 +300,8 @@ class FactionMain extends PluginBase implements Listener {
 	}
         
         public function FacQualify($fac, $type) {
-            if ($type =="d" && isset($this->wars["DEFENDS"][$fac])){
+            echo "$fac -> $type \n";
+            if ($type == "d" && isset($this->wars["DEFENDS"][$fac])){
                 if ($this->wars["DEFENDS"][$fac] > strtotime("now")){
                     return false;
                 }
@@ -311,7 +320,7 @@ class FactionMain extends PluginBase implements Listener {
             }
             foreach ($this->getServer()->getOnlinePlayers() as $p){
                 if ($this->isInFaction($p->getName())){
-                    if ($$this->getPlayerFaction($p->getName()) == $fac){
+                    if ($this->getPlayerFaction($p->getName()) == $fac){
                         if ($this->isOfficer($p->getName()) || $this->isLeader($p->getName())){
                          $p->sendMessage($message);   
                          return true;
@@ -334,8 +343,9 @@ class FactionMain extends PluginBase implements Listener {
             $this->wars["ATTACKS"][$attackers] = strtotime("+6 Hours");
             $this->wars["DEFENDS"][$defenders] = strtotime("+6 Hours");
             $this->atwar[$attackers] = $defenders;
-            $this->getServer()->broadcastMessage("$attakers's Faction Has Just Declared War on $defenders's Faction!");
-            $this->NotifyWar($attakers);
+            $this->getServer()->getScheduler()->scheduleDelayedTask(new EndWar($main, $attackers), 20*60*30); //30 Mins
+            $this->getServer()->broadcastMessage("$attackers's Faction Has Just Declared War on $defenders's Faction!");
+            $this->NotifyWar($attackers);
             $this->NotifyWar($defenders);
             
         }
@@ -347,6 +357,8 @@ class FactionMain extends PluginBase implements Listener {
             if ($fac2 instanceof Player){
                 $fac2 = $this->getPlayerFaction($fac2);
             }
+            echo "$fac => $fac2";
+            print_r ($this->atwar);
             if (isset($this->atwar[$fac]) && $this->atwar[$fac] == $fac2){
                 return true;
             }
@@ -363,7 +375,30 @@ class FactionMain extends PluginBase implements Listener {
             }
         }
         
-	public function onDisable() {
+        public function GetFactionPlots($fac, $num){
+            if (!$this->factionExists($fac)){
+                return false;
+            }
+            
+            $stmt = $this->db->query("SELECT COUNT(*) as count FROM plots WHERE faction = '$fac';");
+            //$n = mysql_num_rows($result);
+            $factionArray = $stmt->fetchArray();
+            if ($factionArray['count'] == 0){
+                return false;
+            }
+            if ($num !== (1 - $factionArray['count'])){
+                return false;
+            }
+            $stmt = $this->db->query("SELECT * FROM plots WHERE faction = '$fac' LIMIT 1,$num;");
+            //$n = mysql_num_rows($result);
+            $factionArray = $stmt->fetchArray();
+            
+            return true;
+            
+            
+        }
+
+        public function onDisable() {
 		$this->db->close();
 	}
 }
