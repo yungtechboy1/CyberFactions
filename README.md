@@ -16,3 +16,6 @@
 * /f leave - leave a faction you are currently in
 * /f motd - set the message of the day for your faction
 * /f info - see the message of the day of your faction
+* /f war <fac> - starts war with faction
+* /f chat - chat with faction members only
+* /f c - /f chat
