@@ -17,6 +17,8 @@ use pocketmine\utils\Config;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\math\Vector3;
 use onebone\economyapi\EconomyAPI;
+use FactionsPro\FactionMain;
+
 
 class FactionCommands {
 	

@@ -20,6 +20,7 @@ use pocketmine\math\Vector3;
 use pocketmine\level\Level;
 use onebone\economyapi\EconomyAPI;
 use FactionsPro\War\EndWar;
+use FactionsPro\FactionCommands;
 
 class FactionMain extends PluginBase implements Listener {
 	
