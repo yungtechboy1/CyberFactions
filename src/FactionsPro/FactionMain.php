@@ -293,7 +293,6 @@ class FactionMain extends PluginBase implements Listener {
 	}
         
         public function FacQualify($fac, $type) {
-            echo "$fac -> $type \n";
             if ($type == "d" && isset($this->wars["DEFENDS"][$fac])){
                 if ($this->wars["DEFENDS"][$fac] > strtotime("now")){
                     return false;
@@ -350,7 +349,6 @@ class FactionMain extends PluginBase implements Listener {
             if ($fac2 instanceof Player){
                 $fac2 = $this->getPlayerFaction($fac2);
             }
-            echo "$fac => $fac2";
             if (isset($this->atwar[$fac]) && $this->atwar[$fac] == $fac2){
                 return true;
             }
@@ -358,10 +356,8 @@ class FactionMain extends PluginBase implements Listener {
         }
         
         public function NotifyWar($fac) {
-            $leader = $this->getLeader($fac);
-            $player = $this->getServer()->getPlayerExact($leader);
             foreach($this->getServer()->getOnlinePlayers() as $p){
-                if ($this->sameFaction($player->getName(), $p->getName())){
+                if ($this->getPlayerFaction($p->getName()) == $fac){
                     $p->sendMessage("Your Faction Is Now At WAR!");
                 }
             }
@@ -381,16 +377,13 @@ class FactionMain extends PluginBase implements Listener {
             $stmt = $this->db->query("SELECT COUNT(*) as count FROM plots WHERE faction = '$fac';");
             //$n = mysql_num_rows($result);
             $factionArray = $stmt->fetchArray();
-            echo $fac." _ ".$factionArray['count']."--\n";
             if ($factionArray['count'] == 0){
                 return false;
             }
             $nn = rand(0, ($factionArray['count'] - 1));
-            echo $nn;
             $stmt1 = $this->db->query("SELECT * FROM plots WHERE faction = '$fac' LIMIT $nn,1;");
             //$n = mysql_num_rows($result);
             $factionArray1 = $stmt1->fetchArray(SQLITE3_ASSOC);
-            echo "**".$factionArray1['x1']."--";
             $x = $factionArray1['x1'] + rand((-1 * abs($num)) , (1 * abs($num)) );
             $z = $factionArray1['z1'] + rand((-1 * abs($num)) , (1 * abs($num)) );
             $v3 = $this->GetLoadedLevel()->getSafeSpawn(new Vector3( $x , 0 , $z ));
