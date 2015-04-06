@@ -127,7 +127,7 @@ class FactionCommands {
 							return true;
 						}
                                                 //remove Player Exact
-						$invited = $this->plugin->getServer()->getPlayerExact($args[1]);
+						$invited = $this->plugin->getServer()->getPlayer($args[1]);
 						if($this->plugin->isInFaction($invited) == true) {
 							$sender->sendMessage("[CyberFaction] Player is currently in a faction");
 							return true;
@@ -164,6 +164,7 @@ class FactionCommands {
 					if($args[0] == "leader") {
 						if($this->plugin->isInFaction($sender->getName()) == true) {
 							if($this->plugin->isLeader($player) == true) {
+                                                            if ($$this->plugin->getServer()->getPlayer($args[1]) instanceof Player){
 								if($this->plugin->getPlayerFaction($player) == $this->plugin->getPlayerFaction($args[1])) {
 									if($this->plugin->getServer()->getPlayer($args[1])->isOnline() == true) {
 										$factionName = $this->plugin->getPlayerFaction($player);
@@ -191,12 +192,14 @@ class FactionCommands {
 									$sender->sendMessage("[CyberFaction] Add player to faction first!");
 								}
 							} else {
+                                                            $sender->sendMessage("[CyberFaction] Player Not Online!");
+                                                        }} else {
 								$sender->sendMessage("[CyberFaction] You must be leader to use this");
 							}
 						} else {
 							$sender->sendMessage("[CyberFaction] You must be in a faction to use this!");
 						}
-					}
+                                            }
 					
 					//Promote
 					
@@ -221,6 +224,10 @@ class FactionCommands {
 							$sender->sendMessage("[CyberFaction] You must be leader to use this");
 							return true;
 						}
+                                                if($this->plugin->isInFaction($ppn) == false){
+                                                    $sender->sendMessage("Player Not In Faction!");
+                                                    return true;
+                                                }
 						if($this->plugin->getPlayerFaction($player) != $this->getPlayerFaction($ppn)) {
 							$sender->sendMessage("[CyberFaction] Player is not in this faction!");
 							return true;
