@@ -49,7 +49,7 @@ class FactionCommands {
                                                 }
                                             }
                                             foreach($b as $p){
-                                                $p->sendMessage("**[FACTION]**: $chat");
+                                                $p->sendMessage("**[$player]**: $chat");
                                             }
                                             return true;
                                         }
@@ -90,6 +90,10 @@ class FactionCommands {
 					//Create
 					
 					if($args[0] == "create") {
+                                                if(!isset($args[1])){
+                                                    $sender->sendMessage(TextFormat::GRAY."Useage /f create <name>");
+                                                    return true;
+                                                }
 						if(!(ctype_alnum($args[1]))) {
 							$sender->sendMessage("[CyberFaction] You may only use letters and numbers!");
 							return true;
@@ -106,14 +110,11 @@ class FactionCommands {
 							$sender->sendMessage("[CyberFaction] You must leave this faction first");
 							return true;
 						} else {
-							$factionName = $args[1];
-							$player = strtolower($player);
-							$rank = "Leader";
-							$stmt = $this->plugin->db->prepare("INSERT OR REPLACE INTO master (player, faction, rank) VALUES (:player, :faction, :rank);");
-							$stmt->bindValue(":player", $player);
-							$stmt->bindValue(":faction", $factionName);
-							$stmt->bindValue(":rank", $rank);
-							$result = $stmt->execute();
+                                                        $factionName = $args[1];
+                                                        $player = strtolower($player);
+                                                        $faction = $factionName;
+                                                        $rank = "Leader";
+							@mysqli_query($this->plugin->db,"REPLACE INTO `master` VALUES ('$player', '$faction', '$rank');");
 							$sender->sendMessage("[CyberFaction] Faction successfully created!");
 							return true;
 						}
@@ -128,7 +129,11 @@ class FactionCommands {
 						}
                                                 //remove Player Exact
 						$invited = $this->plugin->getServer()->getPlayer($args[1]);
-						if($this->plugin->isInFaction($invited) == true) {
+						if(!$invited instanceof Player) {
+							$sender->sendMessage("[CyberFaction] No Player By That Name Is Online!");
+							return true;
+						}
+                                                if($this->plugin->isInFaction($invited) == true) {
 							$sender->sendMessage("[CyberFaction] Player is currently in a faction");
 							return true;
 						}
@@ -141,19 +146,16 @@ class FactionCommands {
 							return true;
 						}
 						if($invited->isOnline() == true) {
-							$factionName = $this->plugin->getPlayerFaction($player);
-							$invitedName = $invited->getName();
-							$rank = "Member";
-								
-							$stmt = $this->plugin->db->prepare("INSERT OR REPLACE INTO confirm (player, faction, invitedby, timestamp) VALUES (:player, :faction, :invitedby, :timestamp);");
-							$stmt->bindValue(":player", strtolower($invitedName));
-							$stmt->bindValue(":faction", $factionName);
-							$stmt->bindValue(":invitedby", $sender->getName());
-							$stmt->bindValue(":timestamp", time());
-							$result = $stmt->execute();
+							$invitee = $invited->getName();
+                                                        $invitedName = $invited->getName();
+                                                        $faction = $this->plugin->getPlayerFaction($player);
+                                                        $rank = "Member";
+                                                        $time = time();
+                                                        @mysqli_query($this->plugin->db,"REPLACE INTO `confirm` VALUES ('$invitee', '$faction', '$player','$time');");
+;
 	
 							$sender->sendMessage("[CyberFaction] Successfully invited $invitedName!");
-							$invited->sendMessage("[CyberFaction] You have been invited to $factionName. Type '/f accept' or '/f deny' into chat to accept or deny!");
+							$invited->sendMessage("[CyberFaction] You have been invited to $faction.\n Type '/f accept' or '/f deny' into chat to accept or deny!");
 						} else {
 							$sender->sendMessage("[CyberFaction] Player not online!");
 						}
@@ -164,38 +166,34 @@ class FactionCommands {
 					if($args[0] == "leader") {
 						if($this->plugin->isInFaction($sender->getName()) == true) {
 							if($this->plugin->isLeader($player) == true) {
-                                                            if ($$this->plugin->getServer()->getPlayer($args[1]) instanceof Player){
+                                                            if(!isset($args[1])){
+                                                                $sender->sendMessage(TextFormat::RED."Useage /f leader <player>");
+                                                                return true;
+                                                            }
+                                                            if ($this->plugin->getServer()->getPlayer($args[1]) instanceof Player){
 								if($this->plugin->getPlayerFaction($player) == $this->plugin->getPlayerFaction($args[1])) {
-									if($this->plugin->getServer()->getPlayer($args[1])->isOnline() == true) {
-										$factionName = $this->plugin->getPlayerFaction($player);
-										$factionName = $this->plugin->getPlayerFaction($player);
-	
-										$stmt = $this->plugin->db->prepare("INSERT OR REPLACE INTO master (player, faction, rank) VALUES (:player, :faction, :rank);");
-										$stmt->bindValue(":player", $player);
-										$stmt->bindValue(":faction", $factionName);
-										$stmt->bindValue(":rank", "Member");
-										$result = $stmt->execute();
-	
-										$stmt = $this->plugin->db->prepare("INSERT OR REPLACE INTO master (player, faction, rank) VALUES (:player, :faction, :rank);");
-										$stmt->bindValue(":player", strtolower($this->plugin->getServer()->getPlayer($args[1])->getName()));
-										$stmt->bindValue(":faction", $factionName);
-										$stmt->bindValue(":rank", "Leader");
-										$result = $stmt->execute();
-	
-	
-										$sender->sendMessage("[CyberFaction] You are no longer leader!");
-										$this->plugin->getServer()->getPlayerExact($args[1])->sendMessage("[CyberFaction] You are now leader \nof $factionName!");
-									} else {
-										$sender->sendMessage("[CyberFaction] Player not online!");
-									}
+                                                                    $factionName = $this->plugin->getPlayerFaction($player);
+                                                                    $player = strtolower($player);
+                                                                    $faction = $factionName;
+                                                                    $rank = "Member";
+                                                                    @mysqli_query($this->plugin->db,"REPLACE INTO `master` VALUES ('$player', '$faction', '$rank');");
+                                                                    $player = strtolower($this->plugin->getServer()->getPlayer($args[1])->getName());
+                                                                    $faction = $factionName;
+                                                                    $rank = "Leader";
+                                                                    @mysqli_query($this->plugin->db,"REPLACE INTO `master` VALUES ('$player', '$faction', '$rank');");
+
+
+                                                                    $sender->sendMessage("[CyberFaction] You are no longer leader!");
+                                                                    $this->plugin->getServer()->getPlayerExact($args[1])->sendMessage("[CyberFaction] You are now leader \nof $factionName!");
 								} else {
 									$sender->sendMessage("[CyberFaction] Add player to faction first!");
 								}
 							} else {
                                                             $sender->sendMessage("[CyberFaction] Player Not Online!");
-                                                        }} else {
-								$sender->sendMessage("[CyberFaction] You must be leader to use this");
-							}
+                                                        }
+                                                    } else {
+                                                            $sender->sendMessage("[CyberFaction] You must be leader to use this");
+                                                    }
 						} else {
 							$sender->sendMessage("[CyberFaction] You must be in a faction to use this!");
 						}
@@ -204,43 +202,43 @@ class FactionCommands {
 					//Promote
 					
 					if($args[0] == "promote") {
+                                                if(!isset($args[1])){
+                                                    $sender->sendMessage(TextFormat::GRAY."Useage /f promote <player>");
+                                                    return true;
+                                                }
 						$pp = $this->plugin->getServer()->getPlayer($args[1]);
                                                 if (!($pp instanceof Player)){
-                                                    $sender->sendMessage("[CyberFactions] Not A Player!");
+                                                    $sender->sendMessage(TextFormat::RED."[CyberFactions] Player Is Not Online Or Does Not Exist!");;
                                                     return true;
                                                 }
                                                 $ppn = $pp->getName();
 						$factionName = $this->plugin->getPlayerFaction($player);
-						if (!($pp instanceof Player)){
-                                                    $sender->sendMessage("[CyberFactions] Player Is Not Online Or Does Not Exist!");
-                                                    return true;
-                                                }
-                                                
 						if($this->plugin->isInFaction($sender->getName()) == false) {
-							$sender->sendMessage("[CyberFaction] You must be in a faction to use this!");
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] You must be in a faction to use this!");
 							return true;
 						}
 						if($this->plugin->isLeader($player) == false) {
-							$sender->sendMessage("[CyberFaction] You must be leader to use this");
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] You must be leader to use this");
 							return true;
 						}
                                                 if($this->plugin->isInFaction($ppn) == false){
-                                                    $sender->sendMessage("Player Not In Faction!");
+                                                    $sender->sendMessage(TextFormat::RED."Target Player Not In Your Faction!");
                                                     return true;
                                                 }
-						if($this->plugin->getPlayerFaction($player) != $this->getPlayerFaction($ppn)) {
-							$sender->sendMessage("[CyberFaction] Player is not in this faction!");
+						if($this->plugin->getPlayerFaction($player) != $this->plugin->getPlayerFaction($ppn)) {
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] Player is not in this faction!");
 							return true;
 						}
-						if($this->plugin->isOfficer($player) == true) {
-							$sender->sendMessage("[CyberFaction] Player is already officer");
+						if($this->plugin->isOfficer($ppn) == true) {
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] Player is already officer");
 							return true;
 						}
-						$stmt = $this->plugin->db->prepare("INSERT OR REPLACE INTO master (player, faction, rank) VALUES (:player, :faction, :rank);");
-						$stmt->bindValue(":player", strtolower($ppn));
-						$stmt->bindValue(":faction", $factionName);
-						$stmt->bindValue(":rank", "Officer");
-						$result = $stmt->execute();
+                                                $player = strtolower($ppn);
+                                                $faction = $factionName;
+                                                $rank = "Officer";
+						@mysqli_query($this->plugin->db,"REPLACE INTO `master` VALUES ('$player', '$faction', '$rank');");
+                                                $sender->sendMessage(TextFormat::GREEN."[CyberFaction] You successfully Promoted $ppn!");
+						$pp->sendMessage(TextFormat::GREEN."[CyberFaction] You Have Been Promoted To a Officer!!!");
 					}
 					
 					//Demote
@@ -251,66 +249,65 @@ class FactionCommands {
                                                 $ppn = $pp->getName();
 						$factionName = $this->plugin->getPlayerFaction($player);
 						if (!($pp instanceof Player)){
-                                                    $sender->sendMessage("Player Is Not Online Or Does Not Exist!");
+                                                    $sender->sendMessage(TextFormat::RED."[CyberFaction] Player Is Not Online Or Does Not Exist!");
                                                     return true;
                                                 }
-                                                
 						if($this->plugin->isInFaction($sender->getName()) == false) {
-							$sender->sendMessage("[CyberFaction] You must be in a faction to use this!");
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] You must be in a faction to use this!");
 							return true;
 						}
 						if($this->plugin->isLeader($player) == false) {
-							$sender->sendMessage("[CyberFaction] You must be leader to use this");
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] You must be leader to use this");
 							return true;
 						}
-						if($this->plugin->getPlayerFaction($player) != $this->getPlayerFaction($ppn)) {
-							$sender->sendMessage("[CyberFaction] Player is not in this faction!");
+						if($this->plugin->getPlayerFaction($player) != $this->plugin->getPlayerFaction($ppn)) {
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] Player is not in this faction!");
 							return true;
 						}
 						if($this->plugin->isOfficer($player) == false) {
-							$sender->sendMessage("[CyberFaction] Player is not Officer");
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] Player is not Officer");
 							return true;
 						}
-						$stmt = $this->plugin->db->prepare("INSERT OR REPLACE INTO master (player, faction, rank) VALUES (:player, :faction, :rank);");
-						$stmt->bindValue(":player", strtolower($this->plugin->getServer()->getPlayer($args[1])->getName()));
-						$stmt->bindValue(":faction", $factionName);
-						$stmt->bindValue(":rank", "Member");
-						$result = $stmt->execute();
+                                                $player = strtolower($ppn);
+                                                $faction = $factionName;
+                                                $rank = "Member";
+						@mysqli_query($this->plugin->db,"REPLACE INTO `master` VALUES ('$player', '$faction', '$rank');");
+                                                $sender->sendMessage(TextFormat::GREEN."[CyberFaction] You successfully Demoted $ppn!");
+						$pp->sendMessage(TextFormat::GREEN."[CyberFaction] You Have Been Demoted To a Member!!!");
 					}
 					
 					//Kick
 					
 					if($args[0] == "kick") {
-                                            $pp = $this->plugin->getServer()->getPlayer($args[1]);
-                                            $ppn = $pp->getName();
-                                                if (!($pp instanceof Player)){
-                                                    $sender->sendMessage("[CyberFactions] Player Is Not Online or Does Not Exist!");
-                                                    return true;
-                                                }
                                                 if ($args[1] == ""){
-                                                    $sender->sendMessage("[CyberFactions] Invalid \n [CyberFactions] /f kick <player>");
+                                                    $sender->sendMessage(TextFormat::RED."[CyberFactions] Invalid \n [CyberFactions] /f kick <player>");
                                                     return true;
                                                 }
-                                                
-						if($this->plugin->isInFaction($sender->getName()) == false) {
-							$sender->sendMessage("[CyberFaction] You must be in a faction to use this!");
+                                                $pp = $this->plugin->getServer()->getPlayer($args[1]);
+                                                if (!($pp instanceof Player)){
+                                                    $sender->sendMessage(TextFormat::RED."[CyberFactions] Player Is Not Online or Does Not Exist!");
+                                                    return true;
+                                                }
+                                                $ppn = $pp->getName();
+                                                if($this->plugin->isInFaction($sender->getName()) == false) {
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] You must be in a faction to use this!");
 							return true;
 						}
 						if($this->plugin->isLeader($player) == false) {
-							$sender->sendMessage("[CyberFaction] You must be leader to use this");
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] You must be leader to use this");
 							return true;
 						}
                                                 if ($this->plugin->isInFaction($ppn) == false){
-                                                    $sender->sendMessage("[CyberFaction] Player Not In Faction!");
+                                                    $sender->sendMessage(TextFormat::RED."[CyberFaction] Player Not In Faction!");
                                                 }
-						if($this->plugin->getPlayerFaction($player) != $this->getPlayerFaction($ppn)) {
-							$sender->sendMessage("[CyberFaction] Player is not in this faction!");
+						if($this->plugin->getPlayerFaction($player) != $this->plugin->getPlayerFaction($ppn)) {
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] Player is not in this faction!");
 							return true;
 						}
 						$factionName = $this->plugin->getPlayerFaction($player);
-						$this->plugin->db->query("DELETE FROM master WHERE player='$ppn';");
-						$sender->sendMessage("[CyberFaction] You successfully kicked $ppn!");
-						$pp->sendMessage("[CyberFaction] You Have Been Kicked From $factionName!!!");
+						@mysqli_query($this->plugin->db,"DELETE FROM master WHERE player='$ppn';");
+						$sender->sendMessage(TextFormat::GREEN."[CyberFaction] You successfully kicked $ppn!");
+						$pp->sendMessage(TextFormat::GREEN."[CyberFaction] You Have Been Kicked From $factionName!!!");
 					}
 					
 					//Info
@@ -332,7 +329,7 @@ class FactionCommands {
 							$sender->sendMessage("-------------------------");
 						} else {
 							$faction = $this->plugin->getPlayerFaction(strtolower($sender->getName()));
-							$result = $this->plugin->db->query("SELECT * FROM desc WHERE faction='$faction';");
+							$result = @mysqli_query($this->plugin->db,"SELECT * FROM desc WHERE faction='$faction';");
 							//$description = $array["description"];
 							$leader = $this->plugin->getLeader($faction);
 							$numPlayers = $this->plugin->getNumberOfPlayers($faction);
@@ -345,48 +342,156 @@ class FactionCommands {
 						}
 					}
                                         
+                                        if(strtolower($args[0] == "ally")) {
+                                            if(!isset($args[1]) || !isset($args[2]) || ($args[1] !== "add" && $args[1] !== "remove")){
+                                                $sender->sendMessage(TextFormat::RED."[CyberFaction] Useage /f ally add|remove <faction>!!!");
+                                                return true;
+                                            }
+                                            if($args[0] == "add"){
+                                                $ofaction = $this->plugin->factionPartialName($args[2]);
+                                                $faction = $this->plugin->getPlayerFaction($sender->getName());
+                                                if(!$this->plugin->isInFaction($sender->getName())){
+                                                    $sender->sendMessage(TextFormat::RED."[CyberFaction] You must be in a faction to use this command!!!");
+                                                    return true;
+                                                }
+                                                if($ofaction == false){
+                                                    $sender->sendMessage(TextFormat::RED."[CyberFaction] Their is no factions by the name of `".$args[2]."`!!!");
+                                                    return true;
+                                                }
+                                                if( $this->plugin->isFactionsAllyed($faction, $ofaction)){
+                                                    $sender->sendMessage(TextFormat::RED."[CyberFaction] Silly Human! Your Already Allied!!");
+                                                    return true;
+                                                }
+                                                if(!$this->plugin->isOfficer($player) || !$this->plugin->isLeader($player)){
+                                                    $sender->sendMessage(TextFormat::RED."[CyberFaction] Silly Human! Your not an officer!!");
+                                                    return true;
+                                                }
+                                                if($this->plugin->GetFactionPower($faction) < 50){
+                                                    $sender->sendMessage(TextFormat::RED."[CyberFaction] You Dont Have Enough Power!");
+                                                    return true;
+                                                }else{
+                                                    $this->plugin->TakeFactionPower($faction, 50);
+                                                    $this->plugin->AddAlliance($faction, $ofaction);
+                                                    $this->plugin->getServer()->broadcastMessage(TextFormat::DARK_AQUA."$faction and $ofaction Are now in an alliance!");
+                                                    return true;
+                                                }
+                                            }
+                                            if($args[0] == "remove"){
+                                                $ofaction = $this->plugin->factionPartialName($args[2]);
+                                                $faction = $this->plugin->getPlayerFaction($sender->getName());
+                                                if(!$this->plugin->isInFaction($sender->getName())){
+                                                    $sender->sendMessage(TextFormat::RED."[CyberFaction] You must be in a faction to use this command!!!");
+                                                    return true;
+                                                }
+                                                if($ofaction == false){
+                                                    $sender->sendMessage(TextFormat::RED."[CyberFaction] Their is no factions by the name of `".$args[2]."`!!!");
+                                                    return true;
+                                                }
+                                                if( $this->plugin->isFactionsAllyed($faction, $ofaction)){
+                                                    $sender->sendMessage(TextFormat::RED."[CyberFaction] Silly Human! Your Already Allied!!");
+                                                    return true;
+                                                }
+                                                if(!$this->plugin->isOfficer($player) || !$this->plugin->isLeader($player)){
+                                                    $sender->sendMessage(TextFormat::RED."[CyberFaction] Silly Human! Your not an officer!!");
+                                                    return true;
+                                                }
+                                                $this->plugin->TakeFactionPower($faction, 50);
+                                                $this->plugin->RemoveAlliance($faction, $ofaction);
+                                                $this->plugin->getServer()->broadcastMessage(TextFormat::DARK_AQUA."$faction and $ofaction Are nolonger in an alliance!");
+                                                return true;
+                                            }
+                                        }
+                                        
 				}
+                                
+                                 if(strtolower($args[0] == "home")) {
+                                        if(isset($args[1])){
+                                            $ofaction = $this->plugin->factionPartialName($args[1]);
+                                            if($ofaction == false){
+                                                $sender->sendMessage(TextFormat::RED."[CyberFaction] No Faction Found By That Name!");
+                                                return true;
+                                            }
+                                            if(!$this->plugin->isFactionsAllyed($this->plugin->getPlayerFaction($sender->getName()), $faction)){
+                                                $sender->sendMessage(TextFormat::RED."[CyberFaction] You Are Not Allied With That Faction!!!");
+                                                return true;
+                                            }
+                                            $result = @mysqli_query("SELECT * FROM `home` WHERE `faction` = '$ofaction';");
+                                            $array = @mysql_fetch_array($result);
+                                            $count = @mysql_num_rows($result);
+                                            if($count > 0) {
+                                                    $sender->getPlayer()->teleport(new Vector3($array['x'], $array['y'], $array['z']));
+                                                    $sender->sendMessage(TextFormat::GREEN."[CyberFaction] Teleported home.");
+                                                    return true;
+                                            } else {
+                                                    $sender->sendMessage(TextFormat::GOLD."[CyberFaction] Home is not set.");
+                                            }
+                                            return true;
+                                        }
+                                        $faction = $this->plugin->getPlayerFaction($sender->getName());
+                                        $result = @mysqli_query("SELECT * FROM `home` WHERE `faction` = '$faction';");
+                                        $array = @mysqli_fetch_assoc($result);
+                                        $count = @mysqli_num_rows($result);
+                                        if($count !== 0) {
+                                                $sender->getPlayer()->teleport(new Vector3($array['x'], $array['y'], $array['z']));
+                                                $sender->sendMessage(TextFormat::GREEN."[CyberFaction] Teleported home.");
+                                                return true;
+                                        } else {
+                                                $sender->sendMessage(TextFormat::GOLD."[CyberFaction] Home is not set.");
+                                        }
+                                }
+                                
 				if(count($args == 1)) {
                                         if (strtolower($args[0]) == "wartp"){
                                             if (!$this->plugin->isInFaction($player)){
-                                                $sender->sendMessage("You must be in faction to use this command");
+                                                $sender->sendMessage(TextFormat::RED."You must be in faction to use this command!!!");
                                                 return true;
                                             }
                                             if (!isset($this->plugin->atwar[$this->plugin->getPlayerFaction($player)])){
-                                                $sender->sendMessage("You are Not At War!");
+                                                $sender->sendMessage(TextFormat::RED."You are Not At War or Attacking!!!");
                                                 return true;
                                             }
-                                            if ($this->plugin->GetRandomTPArea($this->plugin->atwar[$this->plugin->getPlayerFaction($player)], 7)){
-                                            $pos = $this->plugin->GetRandomTPArea($this->plugin->atwar[$this->plugin->getPlayerFaction($player)], 7);
+                                            if ($pos = $this->plugin->GetRandomTPArea($this->plugin->atwar[$this->plugin->getPlayerFaction($player)], 7)){
                                             $sender->teleport($pos);
-                                            $sender->sendMessage("Teleported To War Zone!");
-                                            return true;
+                                            $sender->sendMessage(TextFormat::GREEN."Teleported To War Zone!");
+                                            }else{
+                                                $tp = $this->plugin->GetRandomFactionPlayer($this->plugin->atwar[$this->plugin->getPlayerFaction($player)]);
+                                                $sender->teleport($tp->getPosition());
+                                                $sender->sendMessage(TextFormat::GREEN."Teleported To War Zone!");
                                             }
                                             return true;
                                         }
                                         
-                                    
-					
+                                        if (strtolower($args[0]) == "power"){
+                                            if (!$this->plugin->isInFaction($player)){
+                                                $sender->sendMessage(TextFormat::RED."You must be in faction to use this command!!!");
+                                                return true;
+                                            }
+                                            $sender->sendMessage(TextFormat::LIGHT_PURPLE."Your Faction Has ".$this->plugin->GetFactionPower($this->plugin->getPlayerFaction($player)));
+                                            return true;
+                                        }
+                                        
 					//Plot
 					
 					if(strtolower($args[0]) == "claim") {
 						if(!$this->plugin->isInFaction($sender->getName())) {
-							$sender->sendMessage("[CyberFaction] You must be in a faction to use this.");
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] You must be in a faction to use this.");
 							return true;
 						}
                                                 $amount = (100) * $this->plugin->prefs->get("PlotPrice");
                                                 if (!($this->plugin->api->myMoney($sender->getName()) >= $amount)){
-                                                    $sender->sendMessage("You don't have enough Money! Plot Price: $amount");
+                                                    $sender->sendMessage(TextFormat::RED."You don't have enough Money! Plot Price: $amount");
                                                     return true;
                                                 }else{
                                                     $this->plugin->api->reduceMoney($sender->getName(), $amount);
                                                 }
-                                                    //$this->api->myMoney($sendplayer->getName())
+                                                
 						$x = floor($sender->getX());
 						$y = floor($sender->getY());
 						$z = floor($sender->getZ());
 						$faction = $this->plugin->getPlayerFaction($sender->getPlayer()->getName());
-                                                
+                                                $this->plugin->AddFactioPower($faction, $this->plugin->prefs->get("PlotPrice"));
+                                                $this->plugin->MessageFaction($faction, TextFormat::GRAY."Your Faction has gained 10 Power!", true);
+                                                $this->plugin->AddFactioPower($faction, 10);
 						$this->plugin->drawPlot($sender, $faction, $x, $y, $z, $sender->getPlayer()->getLevel(), 10);
 					}
 					
@@ -396,8 +501,10 @@ class FactionCommands {
 							return true;
 						}
 						$faction = $this->plugin->getPlayerFaction($sender->getName());
-						$this->plugin->db->query("DELETE FROM plots WHERE faction='$faction';");
-						$sender->sendMessage("[CyberFaction] Plot unclaimed.");
+						@mysqli_query($this->plugin->db,"DELETE FROM plots WHERE faction='$faction';");
+						$sender->sendMessage("[CyberFaction] ALL Plots unclaimed.");
+                                                $this->plugin->MessageFaction($faction, TextFormat::RED."Your Faction has Lost 100 Power!", true);
+                                                $this->plugin->TakeFactionPower($faction, 100);
 					}
 					
 					//Description
@@ -412,7 +519,7 @@ class FactionCommands {
 							return true;
 						}
 						$sender->sendMessage("[CyberFaction] Type your description in chat. It will not be visible to other players");
-						$stmt = $this->plugin->db->prepare("INSERT OR REPLACE INTO descRCV (player, timestamp) VALUES (:player, :timestamp);");
+						$stmt = $this->plugin->db->prepare("REPLACE INTO descRCV (player, timestamp) VALUES (:player, :timestamp);");
 						$stmt->bindValue(":player", strtolower($sender->getName()));
 						$stmt->bindValue(":timestamp", time());
 						$result = $stmt->execute();
@@ -423,27 +530,24 @@ class FactionCommands {
 					if(strtolower($args[0]) == "accept") {
 						$player = $sender->getName();
 						$lowercaseName = strtolower($player);
-						$result = $this->plugin->db->query("SELECT * FROM confirm WHERE player='$lowercaseName';");
-						$array = $result->fetchArray(SQLITE3_ASSOC);
+						$result = @mysqli_query($this->plugin->db, "SELECT * FROM `confirm` WHERE `player`='$lowercaseName';");
+						$array = @mysqli_fetch_assoc($result);
 						if(empty($array) == true) {
-							$sender->sendMessage("[CyberFaction] You have not been invited to any factions!");
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] You have not been invited to any factions!");
 							return true;
 						}
 						$invitedTime = $array["timestamp"];
 						$currentTime = time();
-						if( ($currentTime - $invitedTime) <= 60 ) { //This should be configurable
+						if( ($currentTime - $invitedTime) <= 120 ) { //This should be configurable
 							$faction = $array["faction"];
-							$stmt = $this->plugin->db->prepare("INSERT OR REPLACE INTO master (player, faction, rank) VALUES (:player, :faction, :rank);");
-							$stmt->bindValue(":player", strtolower($player));
-							$stmt->bindValue(":faction", $faction);
-							$stmt->bindValue(":rank", "Member");
-							$result = $stmt->execute();
-							$this->plugin->db->query("DELETE FROM confirm WHERE player='$lowercaseName';");
-							$sender->sendMessage("[CyberFaction] You successfully joined $faction!");
-							$this->plugin->getServer()->getPlayerExact($array["invitedby"])->sendMessage("[CyberFaction] $player joined the faction!");
+							@mysqli_query($this->plugin->db, "REPLACE INTO `master` VALUES ('".strtolower($player)."', '$faction', 'Member');");
+							@mysqli_query($this->plugin->db,"DELETE FROM `confirm` WHERE `player` = '$lowercaseName';");
+							$sender->sendMessage(TextFormat::GREEN."[CyberFaction] You successfully joined $faction!");
+							$this->plugin->getServer()->getPlayerExact($array["invitedby"])->sendMessage(TextFormat::GREEN."[CyberFaction] $player joined the faction!");
+                                                        $this->plugin->MessageFaction($faction, TextFormat::GREEN."[CyberFaction] $player joined the faction!");
 						} else {
-							$sender->sendMessage("[CyberFaction] Invite has timed out!");
-							$this->plugin->db->query("DELETE * FROM confirm WHERE player='$player';");
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] Invite has timed out!");
+							@mysqli_query($this->plugin->db,"DELETE * FROM `confirm` WHERE `player` = '$player';");
 						}
 					}
 					
@@ -452,21 +556,21 @@ class FactionCommands {
 					if(strtolower($args[0]) == "deny") {
 						$player = $sender->getName();
 						$lowercaseName = strtolower($player);
-						$result = $this->plugin->db->query("SELECT * FROM confirm WHERE player='$lowercaseName';");
-						$array = $result->fetchArray(SQLITE3_ASSOC);
+						$result = @mysqli_query($this->plugin->db, "SELECT * FROM `confirm` WHERE `player`='$lowercaseName';");
+						$array = @mysqli_fetch_assoc($result);
 						if(empty($array) == true) {
-							$sender->sendMessage("[CyberFaction] You have not been invited to any factions!");
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] You have not been invited to any factions!");
 							return true;
 						}
 						$invitedTime = $array["timestamp"];
 						$currentTime = time();
-						if( ($currentTime - $invitedTime) <= 60 ) { //This should be configurable
-							$this->plugin->db->query("DELETE * FROM confirm WHERE player='$lowercaseName';");
-							$sender->sendMessage("[CyberFaction] Invite declined!");
-							$this->plugin->getServer()->getPlayerExact($array["invitedby"])->sendMessage("[CyberFaction] $player declined the invite!");
+						if( ($currentTime - $invitedTime) <= 120 ) { //This should be configurable
+							@mysqli_query($this->plugin->db,"DELETE * FROM `confirm` WHERE `player`='$lowercaseName';");
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] Invite0 declined!");
+							$this->plugin->getServer()->getPlayerExact($array["invitedby"])->sendMessage(TextFormat::RED."[CyberFaction] $player declined the invite!");
 						} else {
-							$sender->sendMessage("[CyberFaction] Invite has timed out!");
-							$this->plugin->db->query("DELETE * FROM confirm WHERE player='$lowercaseName';");
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] Invite has timed out!");
+							@mysqli_query($this->plugin->db,"DELETE * FROM `confirm` WHERE `player`='$lowercaseName';");
 						}
 					}
 					
@@ -476,13 +580,14 @@ class FactionCommands {
 						if($this->plugin->isInFaction($player) == true) {
 							if($this->plugin->isLeader($player)) {
 								$faction = $this->plugin->getPlayerFaction($player);
-								$this->plugin->db->query("DELETE FROM master WHERE faction='$faction';");
-								$sender->sendMessage("[CyberFaction] Faction successfully disbanded!");
+								@mysqli_query($this->plugin->db,"DELETE FROM `master` WHERE `faction` = '$faction';");
+								$sender->sendMessage(TextFormat::GREEN."[CyberFaction] Faction successfully disbanded!");
+                                                                $this->plugin->DeleteChache($faction, "factionExists");
 							}	 else {
-								$sender->sendMessage("[CyberFaction] You are not leader!");
+								$sender->sendMessage(TextFormat::RED."[CyberFaction] You are not leader!");
 							}
 						} else {
-							$sender->sendMessage("[CyberFaction] You are not in a faction!");
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] You are not in a faction!");
 						}
 					}
 					
@@ -490,13 +595,13 @@ class FactionCommands {
 					
 					if(strtolower($args[0] == "leave")) {
 						if($this->plugin->isLeader($player) == false) {
-							$remove = $sender->getPlayer()->getNameTag();
 							$faction = $this->plugin->getPlayerFaction($player);
+                                                        $this->plugin->DeleteChache($player, "faction");
 							$name = $sender->getName();
-							$this->plugin->db->query("DELETE FROM master WHERE player='$name';");
-							$sender->sendMessage("[CyberFaction] You successfully left $faction");
+							@mysqli_query($this->plugin->db,"DELETE FROM `master` WHERE `player` = '$name';");
+							$sender->sendMessage(TextFormat::GREEN."[CyberFaction] You successfully left $faction");
 						} else {
-							$sender->sendMessage("[CyberFaction] You must delete or give\nleadership first!");
+							$sender->sendMessage(TextFormat::RED."[CyberFaction] You must delete or give leadership to someone else first!!!");
 						}
 					}
 					
@@ -504,40 +609,40 @@ class FactionCommands {
 					
 					if(strtolower($args[0] == "sethome")) {
 						$factionName = $this->plugin->getPlayerFaction($sender->getName());
-						$stmt = $this->plugin->db->prepare("INSERT OR REPLACE INTO home (faction, x, y, z) VALUES (:faction, :x, :y, :z);");
-						$stmt->bindValue(":faction", $factionName);
-						$stmt->bindValue(":x", $sender->getX());
-						$stmt->bindValue(":y", $sender->getY());
-						$stmt->bindValue(":z", $sender->getZ());
-						$result = $stmt->execute();
-						$sender->sendMessage("[CyberFaction] Home updated!");
+                                                $x = $sender->getX();
+                                                $y = $sender->getY();
+                                                $z = $sender->getZ();
+						@mysqli_query($this->plugin->db,"REPLACE INTO `home` (`faction`, `x`, `y`, `z`) VALUES ('$factionName', '$x', '$y', '$z');");
+						$sender->sendMessage(TextFormat::GREEN."[CyberFaction] Home updated!");
 					}
 					
 					if(strtolower($args[0] == "unsethome")) {
 						$faction = $this->plugin->getPlayerFaction($sender->getName());
-						$this->plugin->db->query("DELETE FROM home WHERE faction = '$faction';");
-						$sender->sendMessage("[CyberFaction] Home unset!");
-					}
-					
-					if(strtolower($args[0] == "home")) {
-						$faction = $this->plugin->getPlayerFaction($sender->getName());
-						$result = $this->plugin->db->query("SELECT * FROM home WHERE faction = '$faction';");
-						$array = $result->fetchArray(SQLITE3_ASSOC);
-						if(!empty($array)) {
-							$sender->getPlayer()->teleport(new Vector3($array['x'], $array['y'], $array['z']));
-							$sender->sendMessage("[CyberFaction] Teleported home.");
-							return true;
-						} else {
-							$sender->sendMessage("[CyberFaction] Home is not set.");
-						}
+						@mysqli_query($this->plugin->db,"DELETE FROM `home` WHERE `faction` = '$faction';");
+						$sender->sendMessage(TextFormat::GREEN."[CyberFaction] Home unset!");
 					}
 					
 					if(strtolower($args[0]) == "help") {
-						$sender->sendMessage("FactionsPro Commands\n/f create <name>\n/f del\n/f help\n/f invite <player>\n/f kick <player>\n/f leave\n/f leader <player>\n/f leave\n/f motd\n/f info\n/f chat\n/f claim\n/f unclaim");
+						$sender->sendMessage(TextFormat::GRAY."FactionsPro Commands\n".TextFormat::AQUA
+                                                        . "/f create <name>\n"
+                                                        . "/f del\n/f help\n"
+                                                        . "/f invite <player>\n"
+                                                        . "/f kick <player>\n"
+                                                        . "/f leave\n"
+                                                        . "/f leader <player>\n"
+                                                        . "/f leave\n"
+                                                        . "/f motd\n"
+                                                        . "/f info\n"
+                                                        . "/f chat\n"
+                                                        . "/f claim\n"
+                                                        . "/f unclaim\n"
+                                                        . "/f home [faction]\n"
+                                                        . "/f sethome\n"
+                                                        . "/f ally add|remove <faction>");
 					}
 				} else {
                                     
-					$sender->sendMessage("[CyberFaction] Please use /f help for a list of commands");
+					$sender->sendMessage(TextFormat::GRAY."[CyberFaction] Please use /f help for a list of commands");
 				}
 			}
 		} else {

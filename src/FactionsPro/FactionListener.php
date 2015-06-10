@@ -30,19 +30,24 @@ class FactionListener implements Listener {
 	
 	public function factionPVP(EntityDamageEvent $factionDamage) {
 		if($factionDamage instanceof EntityDamageByEntityEvent) {
-			if(!($factionDamage->getEntity() instanceof Player) or !($factionDamage->getDamager() instanceof Player)) {
-				return true;
-			}
-			if(($this->plugin->isInFaction($factionDamage->getEntity()->getPlayer()->getName()) == false) or ($this->plugin->isInFaction($factionDamage->getDamager()->getPlayer()->getName()) == false) ) {
-				return true;
-			}
-			if(($factionDamage->getEntity() instanceof Player) and ($factionDamage->getDamager() instanceof Player)) {
-				$player1 = $factionDamage->getEntity()->getPlayer()->getName();
-				$player2 = $factionDamage->getDamager()->getPlayer()->getName();
-				if($this->plugin->sameFaction($player1, $player2) == true) {
-					$factionDamage->setCancelled(true);
-				}
-			}
+			if(!($factionDamage->getEntity() instanceof Player) || !($factionDamage->getDamager() instanceof Player))return true;
+			if(($this->plugin->isInFaction($factionDamage->getEntity()->getPlayer()->getName()) == false) || ($this->plugin->isInFaction($factionDamage->getDamager()->getPlayer()->getName()) == false) ) return true;
+                        $player1 = $factionDamage->getEntity()->getPlayer()->getName();
+                        $player2 = $factionDamage->getDamager()->getPlayer()->getName();
+                        echo "hit:";
+                        if($this->plugin->sameFaction($player1, $player2) == true) {
+                                $factionDamage->setCancelled(true);
+                                echo 'no\n';
+                                return true;
+                        }
+                        $faction1 = $this->plugin->getPlayerFaction($player1);
+                        $faction2 = $this->plugin->getPlayerFaction($player2);
+                        if($this->plugin->isFactionsAllyed($faction1, $faction2)){
+                            $factionDamage->setCancelled(true);
+                            echo 'no2\n';
+                            return true;
+                        }
+                        echo 'Yes\n';
 		}
 	}
 	public function factionBlockBreakProtect(BlockBreakEvent $event) {
