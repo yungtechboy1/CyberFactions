@@ -36,23 +36,20 @@ class FactionCommands {
 					$sender->sendMessage("[CyberFaction] Please use /f help for a list of commands");
 				}
                                 
-                                 if (isset($args[0]) && ($args[0] == "chat" || $args[0] == "c")){
-                                            foreach($this->plugin->getServer()->getOnlinePlayers() as  $p){
-                                                if ($this->plugin->sameFaction($sender->getName(), $p->getName())){
-                                                   $b[] = $p; 
-                                                }
-                                            }
-                                            $chat = "";
-                                            foreach($args as $cc=>$c){
-                                                if ($cc !== 0){
-                                                    $chat .= $c." ";
-                                                }
-                                            }
-                                            foreach($b as $p){
-                                                $p->sendMessage("**[$player]**: $chat");
-                                            }
-                                            return true;
-                                        }
+                 if (isset($args[0]) && ($args[0] == "chat" || $args[0] == "c")){
+                            $chat = "";
+                            foreach($args as $cc=>$c){
+                                if ($cc !== 0){
+                                    $chat .= $c." ";
+                                }
+                            }
+                            foreach($this->plugin->getServer()->getOnlinePlayers() as  $p){
+                                if ($this->plugin->sameFaction($sender->getName(), $p->getName())){
+                                    $p->sendMessage("**[$player]**: $chat");
+                                }
+                            }
+                            return true;
+                        }
                                 
 				if(count($args == 2)) {
 					
@@ -90,10 +87,10 @@ class FactionCommands {
 					//Create
 					
 					if($args[0] == "create") {
-                                                if(!isset($args[1])){
-                                                    $sender->sendMessage(TextFormat::GRAY."Useage /f create <name>");
-                                                    return true;
-                                                }
+                        if(!isset($args[1])){
+                            $sender->sendMessage(TextFormat::GRAY."Useage /f create <name>");
+                            return true;
+                        }
 						if(!(ctype_alnum($args[1]))) {
 							$sender->sendMessage("[CyberFaction] You may only use letters and numbers!");
 							return true;
@@ -114,6 +111,9 @@ class FactionCommands {
                                                         $player = strtolower($player);
                                                         $faction = $factionName;
                                                         $rank = "Leader";
+                                                        $this->plugin->DeleteChache($player, "getPlayerFaction");
+                                                        $this->plugin->SetChache($player, "getPlayerFaction", $faction);
+                                                        $this->plugin->SetChache($player, "isInFaction","yes");
 							@mysqli_query($this->plugin->db,"REPLACE INTO `master` VALUES ('$player', '$faction', '$rank');");
 							$sender->sendMessage("[CyberFaction] Faction successfully created!");
 							return true;
@@ -304,6 +304,8 @@ class FactionCommands {
 							$sender->sendMessage(TextFormat::RED."[CyberFaction] Player is not in this faction!");
 							return true;
 						}
+                                                $this->plugin->DeleteChache($player, "getPlayerFaction");
+                                                $this->plugin->DeleteChache($player, "isInFaction");
 						$factionName = $this->plugin->getPlayerFaction($player);
 						@mysqli_query($this->plugin->db,"DELETE FROM master WHERE player='$ppn';");
 						$sender->sendMessage(TextFormat::GREEN."[CyberFaction] You successfully kicked $ppn!");
@@ -420,7 +422,7 @@ class FactionCommands {
                                             $count = @mysql_num_rows($result);
                                             if($count > 0) {
                                                     $sender->getPlayer()->teleport(new Vector3($array['x'], $array['y'], $array['z']));
-                                                    $sender->sendMessage(TextFormat::GREEN."[CyberFaction] Teleported home.");
+                                                    $sender->sendMessage(TextFormat::GREEN."[CyberFaction] Teleported to $ofaction home.");
                                                     return true;
                                             } else {
                                                     $sender->sendMessage(TextFormat::GOLD."[CyberFaction] Home is not set.");
@@ -431,7 +433,7 @@ class FactionCommands {
                                         $result = @mysqli_query("SELECT * FROM `home` WHERE `faction` = '$faction';");
                                         $array = @mysqli_fetch_assoc($result);
                                         $count = @mysqli_num_rows($result);
-                                        if($count !== 0) {
+                                        if($count > 0) {
                                                 $sender->getPlayer()->teleport(new Vector3($array['x'], $array['y'], $array['z']));
                                                 $sender->sendMessage(TextFormat::GREEN."[CyberFaction] Teleported home.");
                                                 return true;
@@ -538,17 +540,21 @@ class FactionCommands {
 						}
 						$invitedTime = $array["timestamp"];
 						$currentTime = time();
-						if( ($currentTime - $invitedTime) <= 120 ) { //This should be configurable
+						if( ($currentTime - $invitedTime) <= 180 ) { //This should be configurable
 							$faction = $array["faction"];
 							@mysqli_query($this->plugin->db, "REPLACE INTO `master` VALUES ('".strtolower($player)."', '$faction', 'Member');");
 							@mysqli_query($this->plugin->db,"DELETE FROM `confirm` WHERE `player` = '$lowercaseName';");
 							$sender->sendMessage(TextFormat::GREEN."[CyberFaction] You successfully joined $faction!");
+                                                        $this->plugin->DeleteChache($player, "getPlayerFaction");
+                                                        $this->plugin->SetChache($player, "getPlayerFaction", $faction);
 							$this->plugin->getServer()->getPlayerExact($array["invitedby"])->sendMessage(TextFormat::GREEN."[CyberFaction] $player joined the faction!");
-                                                        $this->plugin->MessageFaction($faction, TextFormat::GREEN."[CyberFaction] $player joined the faction!");
+                                                        $this->plugin->MessageFaction($faction, TextFormat::GREEN."[CyberFaction] $player joined the faction!!");
+                                                        $this->plugin->SetChache($player, "isInFaction","yes");
 						} else {
 							$sender->sendMessage(TextFormat::RED."[CyberFaction] Invite has timed out!");
 							@mysqli_query($this->plugin->db,"DELETE * FROM `confirm` WHERE `player` = '$player';");
 						}
+                                                
 					}
 					
 					//Deny
@@ -579,12 +585,14 @@ class FactionCommands {
 					if(strtolower($args[0]) == "del") {
 						if($this->plugin->isInFaction($player) == true) {
 							if($this->plugin->isLeader($player)) {
-								$faction = $this->plugin->getPlayerFaction($player);
-								@mysqli_query($this->plugin->db,"DELETE FROM `master` WHERE `faction` = '$faction';");
-								$sender->sendMessage(TextFormat::GREEN."[CyberFaction] Faction successfully disbanded!");
-                                                                $this->plugin->DeleteChache($faction, "factionExists");
-							}	 else {
-								$sender->sendMessage(TextFormat::RED."[CyberFaction] You are not leader!");
+                                                            $faction = $this->plugin->getPlayerFaction($player);
+                                                            @mysqli_query($this->plugin->db,"DELETE FROM `master` WHERE `faction` = '$faction';");
+                                                            $sender->sendMessage(TextFormat::GREEN."[CyberFaction] Faction successfully disbanded!");
+                                                            $this->plugin->DeleteChache($faction, "factionExists");
+                                                            $this->plugin->DeleteChache($player, "getPlayerFaction");
+                                                            $this->plugin->DeleteChache($player, "isInFaction");
+							}else {
+                                                            $sender->sendMessage(TextFormat::RED."[CyberFaction] You are not leader!");
 							}
 						} else {
 							$sender->sendMessage(TextFormat::RED."[CyberFaction] You are not in a faction!");
@@ -600,6 +608,8 @@ class FactionCommands {
 							$name = $sender->getName();
 							@mysqli_query($this->plugin->db,"DELETE FROM `master` WHERE `player` = '$name';");
 							$sender->sendMessage(TextFormat::GREEN."[CyberFaction] You successfully left $faction");
+                                                        $this->plugin->DeleteChache($player, "getPlayerFaction");
+                                                        $this->plugin->DeleteChache($player, "isInFaction");
 						} else {
 							$sender->sendMessage(TextFormat::RED."[CyberFaction] You must delete or give leadership to someone else first!!!");
 						}
@@ -612,7 +622,8 @@ class FactionCommands {
                                                 $x = $sender->getX();
                                                 $y = $sender->getY();
                                                 $z = $sender->getZ();
-						@mysqli_query($this->plugin->db,"REPLACE INTO `home` (`faction`, `x`, `y`, `z`) VALUES ('$factionName', '$x', '$y', '$z');");
+                                                @mysqli_query($this->plugin->db,"DELETE FROM `home` WHERE `faction` = '$faction';");
+						@mysqli_query($this->plugin->db,"INSERT INTO `home` (`faction`, `x`, `y`, `z`) VALUES ('$factionName', '$x', '$y', '$z');");
 						$sender->sendMessage(TextFormat::GREEN."[CyberFaction] Home updated!");
 					}
 					

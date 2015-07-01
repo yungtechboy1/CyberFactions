@@ -21,6 +21,8 @@ use pocketmine\level\Level;
 use onebone\economyapi\EconomyAPI;
 use FactionsPro\War\EndWar;
 use FactionsPro\FactionCommands;
+use pocketmine\event\player\PlayerInteractEvent;
+use pocketmine\entity\Entity;
 
 class FactionMain extends PluginBase implements Listener {
 	
@@ -29,6 +31,7 @@ class FactionMain extends PluginBase implements Listener {
 	public $work;
         public $api;
 	public $tblock;
+	public $sneak;
         public $wars;
         public $atwar = array();
         public $chache = array();
@@ -41,13 +44,13 @@ class FactionMain extends PluginBase implements Listener {
 		$this->fCommand = new FactionCommands($this);
 		 $this->api = EconomyAPI::getInstance();
 		$this->prefs = new Config($this->getDataFolder() . "Prefs.yml", CONFIG::YAML, array(
-				"MaxFactionNameLength" => 20,
-				"MaxPlayersPerFaction" => 10,
-				"OnlyLeadersAndOfficersCanInvite" => true,
-				"OfficersCanClaim" => true,
-				"PlotPrice" => 100,
-				"OfficerIdentifier" => '*',
-				"LeaderIdentifier" => '**',
+                    "MaxFactionNameLength" => 20,
+                    "MaxPlayersPerFaction" => 10,
+                    "OnlyLeadersAndOfficersCanInvite" => true,
+                    "OfficersCanClaim" => true,
+                    "PlotPrice" => 100,
+                    "OfficerIdentifier" => '*',
+                    "LeaderIdentifier" => '**',
 		));
                 $this->wars = (new Config($this->getDataFolder() . "Wars.yml", CONFIG::YAML, array(
                     "ATTACKS" =>array(),
@@ -55,9 +58,9 @@ class FactionMain extends PluginBase implements Listener {
                 )))->getAll();
                 $this->tblock = (new Config($this->getDataFolder() . "Prefs.yml", CONFIG::YAML, array()))->getAll();
 		//$this->db = new \SQLite3($this->getDataFolder() . "FactionsPro.db");
-                $db_ip = "cybertechpp.com";
-                $db_user = "admin_ifriend";
-                $db_pass = "admin_ifriend";
+                $db_ip = "0.0.0.0";
+                $db_user = "admin_factions";
+                $db_pass = "admin_factions";
                 $db_databes = "admin_factions";
                 $this->db = @mysqli_connect($db_ip, $db_user, $db_pass,$db_databes,3306);
                 if(!$this->db){
@@ -80,22 +83,23 @@ class FactionMain extends PluginBase implements Listener {
 		$this->fCommand->onCommand($sender, $command, $label, $args);
 	}
 	public function isInFaction($player) {
-                $player = strtolower($player);
-                $a = $this->GetChache($player, "isInFaction");
-                if($a !== false){
-                    if($a == true)return true;
-                    if($a == "no")return false;
-                }
-                echo "iIF";
+        if($player instanceof Player)$player = $player->getName();
+        $player = strtolower($player);
+        $a = $this->GetChache($player, "isInFaction");
+        if($a !== false){
+            if($a == "yes")return true;
+            if($a == "no")return false;
+            return false;
+        }
 		$result = @mysqli_query($this->db,"SELECT * FROM `master` WHERE `player`='$player';");
 		$array = @mysqli_num_rows($result);
-                if($array > 0){
-                    $this->SetChache($player, "isInFaction", true);
-                    return true;
-                }else{
-                    $this->SetChache($player, "isInFaction", "no");
-                    return false;
-                }
+        if($array > 0){
+            $this->SetChache($player, "isInFaction", "yes");
+            return true;
+        }else{
+            $this->SetChache($player, "isInFaction", "no");
+            return false;
+        }
 	}
 	public function isLeader($player) {
 		$faction = @mysqli_query($this->db,"SELECT * FROM `master` WHERE `player`='$player';");
@@ -125,20 +129,44 @@ class FactionMain extends PluginBase implements Listener {
                 return $factionArray["rank"] == "Member";
 	}
 	public function getPlayerFaction($player) {
-                $a = $this->GetChache($player, "faction");
-                if($a !== false)return $a;
-		$faction = @mysqli_query($this->db,"SELECT * FROM `master` WHERE `player`='$player';");
-		$factionArray = @mysqli_fetch_assoc($faction);
-                if (!empty($factionArray["faction"]) && $factionArray["faction"] != ""){
-                    $this->SetChache($player, "faction", $factionArray["faction"]);
-                    return $factionArray["faction"];
-                }
+        $a = $this->GetChache($player, "getPlayerFaction");
+        if($a !== false)return $a;
+        $faction = @mysqli_query($this->db,"SELECT * FROM `master` WHERE `player`='$player';");
+        $factionArray = @mysqli_fetch_assoc($faction);
+        $count = @mysqli_num_rows($faction);
+        if ($count > 0 && $factionArray["faction"] != "" && $factionArray["faction"] != 1){
+            $this->SetChache($player, "getPlayerFaction", $factionArray["faction"]);
+            if($color == true)return $factionArray["faction-color"];
+            return $factionArray["faction"];
+        }
 		return false;
 	}
+
+    public function getFactionColor($faction){
+        $a = $this->GetChache($faction, "getFactionColor");
+        if($a !== false){
+            if($a == "yes")return true;
+            if($a == "no")return false;
+            return false;
+        }
+        $faction = @mysqli_query($this->db,"SELECT * FROM `settings` WHERE `faction`='$faction';");
+        $count = @mysqli_num_rows($faction);
+        $row = @mysqli_fetch_assoc($faction);
+        if($count > 0){
+            if($row['color'] == ""){
+                $this->SetChache($faction, "getFactionColor", "no");
+                return false;
+            }
+            $this->SetChache($faction, "getFactionColor", "yes");
+            return $row['color'];
+        }
+        $this->SetChache($faction, "getFactionColor", "no");
+        return false;
+    }
         
         public function GetChache($player, $key) {
-            if(isset($this->chache[$key][$player]))return $this->chache[$key][$player];
-            return false;
+            if(!isset($this->chache[$key][$player]) || !isset($this->chache[$key]))return false;
+            return $this->chache[$key][$player];
         }
         
         public function SetChache($player, $key, $value) {
@@ -165,10 +193,16 @@ class FactionMain extends PluginBase implements Listener {
          */
 	public function factionExists($faction) {
                 $a = $this->GetChache($faction, "factionExists");
-                if($a !== false)return $a;
-		$result = @mysqli_query($this->db,"SELECT * FROM `master` WHERE `faction` = '$faction';");
+                if($a !== false){
+                    if($a == true)return $a;
+                    if($a == "no")return false;
+                }
+		        $result = @mysqli_query($this->db,"SELECT * FROM `master` WHERE `faction` = '$faction';");
                 $count = @mysqli_num_rows($result);
-                if($count <= 0)return false;
+                if($count == 0){
+                    $this->SetChache($faction, "factionExists", "no");
+                    return false;
+                }
                 $this->SetChache($faction, "factionExists", true);
                 return true;
                 
@@ -186,6 +220,8 @@ class FactionMain extends PluginBase implements Listener {
 	public function sameFaction($player1, $player2) {
             $faction1 = $this->getPlayerFaction($player1);
             $faction2 = $this->getPlayerFaction($player2);
+            if($faction1 == false)return false;
+            if($faction2 == false)return false;
             if($faction1 == $faction2){return true;}else{return false;}
 	}
 	public function getNumberOfPlayers($faction) {
@@ -272,7 +308,7 @@ class FactionMain extends PluginBase implements Listener {
                 if ($this->FactionHasPlot($faction)){
                     if ($b){
                         $this->newPlot($faction, $x + $arm, $z + $arm, $x - $arm, $z - $arm);
-                        $sender->sendMessage(TextFormat::GRAY."[FactionsPro] Plot claimed.");
+                        $sender->sendMessage(TextFormat::GRAY."[CyberFaction] Plot claimed.");
                         $level->setBlock(new Vector3($x + $arm, $y, $z + $arm), $block);
                         $level->setBlock(new Vector3($x - $arm, $y, $z - $arm), $block);
                         $level->setBlock(new Vector3($x, $y-1, $z), $block);
@@ -284,7 +320,7 @@ class FactionMain extends PluginBase implements Listener {
                 }
                 
 		$this->newPlot($faction, $x + $arm, $z + $arm, $x - $arm, $z - $arm);
-		$sender->sendMessage(TextFormat::GRAY."[FactionsPro] Plot claimed.");
+		$sender->sendMessage(TextFormat::GRAY."[CyberFaction] Plot claimed.");
                 $level->setBlock(new Vector3($x + $arm, $y, $z + $arm), $block);
 		$level->setBlock(new Vector3($x - $arm, $y, $z - $arm), $block);
 		$level->setBlock(new Vector3($x, $y-1, $z), $block);
@@ -296,8 +332,8 @@ class FactionMain extends PluginBase implements Listener {
 	
 	public function plotChecker($onlinePlayers) {
 		foreach($onlinePlayers as $player) {
-			if($this->isInPlot($player)) {
-				$player->sendMessage(TextFormat::GRAY."[FactionsPro] You are in a plot.");
+			if($this->isInPlot($player) && $player instanceof Player) {
+				$player->sendTip(TextFormat::YELLOW."[CyberFaction] You are in a plot.");
 			}
 		}
 	}
@@ -334,7 +370,8 @@ class FactionMain extends PluginBase implements Listener {
 	public function pointIsInPlot($x,$z) {
 		$result = @mysqli_query($this->db,"SELECT * FROM `plots` WHERE '$x' <= `x1` AND '$x' >= `x2` AND '$z' <= `z1` AND '$z' >= `z2`;");
 		$count = @mysqli_num_rows($result);
-		return ($count == 0);
+		if ($count == 0)return false;
+		return true;
 	}
 	
         public function pointIsInSpawn($x , $z) {
@@ -523,9 +560,9 @@ class FactionMain extends PluginBase implements Listener {
         
         public function MessageFaction($faction, $message, $popup = false) {
             foreach($this->getServer()->getOnlinePlayers() as $p){
-                $faction = $this->getPlayerFaction($p);
-                if($faction == false || $faction == null)break;
-                $player = $this->getServer()->getPlayerExact($p);
+                $factionb = $this->getPlayerFaction($p->getName());
+                if($factionb == false || $factionb == null && strtolower($faction) == strtolower($factionb))break;
+                $player = $p;
                 if($popup == false){
                     $player->sendMessage($message);
                 }else{
@@ -543,6 +580,32 @@ class FactionMain extends PluginBase implements Listener {
         }
 
         public function onDisable() {
-		$this->db->close();
+		if($this->db)$this->db->close();
 	}
+        
+        public function ToggleSneak($player) {
+            if($player instanceof Player)$player = $player->getName();
+            if(isset($this->sneak[$player])){
+                if($this->sneak[$player] == true){
+                    $player->setDataFlag(Entity::DATA_FLAGS, Entity::DATA_FLAG_SNEAKING, false);
+                    $this->sneak[$player] = false;
+                }elseif($this->sneak[$player] == false){
+                    $player->setDataFlag(Entity::DATA_FLAGS, Entity::DATA_FLAG_SNEAKING, true);
+                    $this->sneak[$player] = true;
+                }
+            }else{
+                $player->setDataFlag(Entity::DATA_FLAGS, Entity::DATA_FLAG_SNEAKING, true);
+                $this->sneak[$player] = true;
+            }
+        }
+        
+        public function PlayerInteractEvent(PlayerInteractEvent $event) {
+            if($event->getPlayer()->getInventory()->getItemInHand() == 347)$this->ToggleSneak($event->getPlayer());
+            if($event->getPlayer()->getInventory()->getItemInHand() == 345){
+                $this->getServer()->dispatchCommand($event->getPlayer(), "home 1");
+            }
+            if($event->getPlayer()->getInventory()->getItemInHand() == 120){
+                $this->getServer()->dispatchCommand($event->getPlayer(), "f home");
+            }
+        }
 }

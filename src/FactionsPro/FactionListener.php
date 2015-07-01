@@ -29,6 +29,7 @@ class FactionListener implements Listener {
 	
 	
 	public function factionPVP(EntityDamageEvent $factionDamage) {
+                if($factionDamage->isCancelled())return true;
 		if($factionDamage instanceof EntityDamageByEntityEvent) {
 			if(!($factionDamage->getEntity() instanceof Player) || !($factionDamage->getDamager() instanceof Player))return true;
 			if(($this->plugin->isInFaction($factionDamage->getEntity()->getPlayer()->getName()) == false) || ($this->plugin->isInFaction($factionDamage->getDamager()->getPlayer()->getName()) == false) ) return true;
@@ -37,17 +38,15 @@ class FactionListener implements Listener {
                         echo "hit:";
                         if($this->plugin->sameFaction($player1, $player2) == true) {
                                 $factionDamage->setCancelled(true);
-                                echo 'no\n';
                                 return true;
                         }
                         $faction1 = $this->plugin->getPlayerFaction($player1);
                         $faction2 = $this->plugin->getPlayerFaction($player2);
                         if($this->plugin->isFactionsAllyed($faction1, $faction2)){
                             $factionDamage->setCancelled(true);
-                            echo 'no2\n';
                             return true;
                         }
-                        echo 'Yes\n';
+                        return true;
 		}
 	}
 	public function factionBlockBreakProtect(BlockBreakEvent $event) {
@@ -56,6 +55,7 @@ class FactionListener implements Listener {
                     return true;
                 }
             }
+            if($event->isCancelled())return true;
 		if($this->plugin->pointIsInPlot($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ())) {
 			if( ($this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ())) != $this->plugin->getPlayerFaction($event->getPlayer()->getName())) {
 				$faction = $this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ());
@@ -75,6 +75,7 @@ class FactionListener implements Listener {
                     return true;
                 }
             }
+            if($event->isCancelled())return true;
 		if($this->plugin->pointIsInPlot($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ())) {
                     if( ($this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ())) != $this->plugin->getPlayerFaction($event->getPlayer()->getName())) {
                                 $faction = $this->plugin->factionFromPoint($event->getBlock()->getFloorX(), $event->getBlock()->getFloorZ());
