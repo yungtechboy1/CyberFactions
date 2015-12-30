@@ -8,6 +8,12 @@ commands:
   f:
     description: use /f help for all parameters
     permission: f.command
+  wild:
+    description: Teleport to Wild
+    permission: f.command
+  cban:
+    description: Ban Clients
+    permission: f.command
 permissions:
   f.command:
     default: true
