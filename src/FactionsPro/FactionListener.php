@@ -104,22 +104,24 @@ class FactionListener implements Listener {
          }
         
         public function EnchantItemInHand(Player $player) {
+            $enchanting = TextFormat::LIGHT_PURPLE."[Enchanting]";
             $player->getInventory()->sendContents($player);
             $hand = $player->getInventory()->getItemInHand();
             $rank = $this->plugin->GetRank($player);
-            if($this->plugin->GetRank($player) == false && !$player->isOp()){
-                $player->sendMessage(TextFormat::AQUA."Support the server today! \nBuy Ranks from $5 at www.cyberechpp.com/MCPE");
-                $player->sendMessage(TextFormat::AQUA."Ranks activate immediately");
-            }
         if($hand->getCount() > 1){
         $player->sendMessage(TextFormat::RED."One Item at a Time Please!");
         }
             if($hand == null)return;
             if($hand->hasEnchantments()){
-              $player->sendMessage(TextFormat::RED."[ENCHANT] Your Item is already enchanted!!!");
+              $player->sendMessage($enchanting.TextFormat::RED."Your Item is already enchanted!!!");
               return;
             }
             if($hand->getId() == Item::DIAMOND_SWORD || $hand->getId() == Item::IRON_SWORD || $hand->getId() == Item::STONE_SWORD || $hand->getId() == Item::GOLDEN_SWORD || $hand->getId() == Item::WOODEN_SWORD){
+                if($rank == false && !$player->isOp()){
+                    $player->sendMessage($enchanting.TextFormat::AQUA."Support the server today and UnLock all Enchants!");
+                    $player->sendMessage($enchanting.TextFormat::AQUA."Buy Ranks from $5 at www.cyberechpp.com/MCPE");
+                    $player->sendMessage($enchanting.TextFormat::AQUA."Ranks activate immediately");
+                }
                 $rand[] = 9;
                 $rand[] = 10;
                 $rand[] = 11;
@@ -134,16 +136,23 @@ class FactionListener implements Listener {
                     $player->takeExpLevel($plevel);
                     $hand->addEnchantment($enchant);
                     if(!$hand->hasEnchantments())$player->sendMessage ("ERROR");
-                    $player->sendMessage(TextFormat::GREEN."[ENCHANT] Took ".TextFormat::GOLD.$plevel." Levels".TextFormat::GREEN." to Enchant Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
+                    $player->sendMessage($enchanting.TextFormat::GREEN." Took ".TextFormat::GOLD.$plevel." Levels".TextFormat::GREEN." to Enchant Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
                     $player->getInventory()->setItemInHand($hand);
                     $player->getInventory()->sendContents($player);
                     return;
                 }else{
-                    $player->sendMessage(TextFormat::RED."[ENCHANT]".TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
+                    $player->sendMessage($enchanting.TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
                     return;
                 }
             }
-            if(strpos($hand->getName(), "axe") || strpos($hand->getName(), "shovel") ){
+            if($rank == false && !$player->isOp()){
+                    $player->sendMessage($enchanting.TextFormat::AQUA."You can only enchant Swords!");
+                    $player->sendMessage($enchanting.TextFormat::RED."Please Support the server To Get Full Enchanting Abillity!");
+                    $player->sendMessage($enchanting.TextFormat::RED."Buy Ranks from $5 at www.cyberechpp.com/MCPE");
+                    $player->sendMessage($enchanting.TextFormat::RED."Ranks activate immediately");
+                    return true;
+                }
+            if(stripos($hand->getName(), "axe") || stripos($hand->getName(), "shovel") ){
                 $id = mt_rand(15, 18);
                 $plevel = mt_rand(1, 8);
                 $enchant = \pocketmine\item\enchantment\Enchantment::getEnchantment($id);
@@ -151,18 +160,25 @@ class FactionListener implements Listener {
                 if($player->getExpLevel() >= $plevel){
                     $player->takeExpLevel($plevel);
                     $hand->addEnchantment($enchant);
-                    $player->sendMessage(TextFormat::GREEN."[ENCHANT] Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
+                    $player->sendMessage($enchanting.TextFormat::GREEN."Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
                     $player->getInventory()->setItemInHand($hand);
                     $player->getInventory()->sendContents($player);
                     return;
                 }else{
-                    $player->sendMessage(TextFormat::RED."[ENCHANT]".TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
+                    $player->sendMessage($enchanting.TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
                     return;
                 }
             }
             
             if($hand instanceof \pocketmine\item\Armor){
-                if(strpos($hand->getName(), "helment")){
+                $enchanting = TextFormat::LIGHT_PURPLE."[Enchanting]";
+                if($rank == false && !$player->isOp()){
+                    $player->sendMessage($enchanting.TextFormat::AQUA."Please Support the server To Enchant Armor!");
+                    $player->sendMessage($enchanting.TextFormat::AQUA."Buy Ranks from $5 at www.cyberechpp.com/MCPE");
+                    $player->sendMessage($enchanting.TextFormat::AQUA."Ranks activate immediately");
+                    return true;
+                }
+                if(stripos($hand->getName(), "helment")){
                     $rand[] = 0;
                     $rand[] = 1;
                     $rand[] = 3;
@@ -177,16 +193,16 @@ class FactionListener implements Listener {
                     if($player->getExpLevel() >= $plevel){
                         $player->takeExpLevel($plevel);
                         $hand->addEnchantment($enchant);
-                        $player->sendMessage(TextFormat::GREEN."[ENCHANT] Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
+                        $player->sendMessage($enchanting.TextFormat::GREEN." Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
                         $player->getInventory()->setItemInHand($hand);
                         $player->getInventory()->sendContents($player);
                         return;
                     }else{
-                        $player->sendMessage(TextFormat::RED."[ENCHANT]".TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
+                        $player->sendMessage($enchanting.TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
                         return;
                     }
                 }
-                if(strpos($hand->getName(), "chestplate")){
+                if(stripos($hand->getName(), "chestplate")){
                     $rand[] = 0;
                     $rand[] = 1;
                     $rand[] = 3;
@@ -200,16 +216,16 @@ class FactionListener implements Listener {
                     if($player->getExpLevel() >= $plevel){
                         $player->takeExpLevel($plevel);
                         $hand->addEnchantment($enchant);
-                        $player->sendMessage(TextFormat::GREEN."[ENCHANT] Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
+                        $player->sendMessage($enchanting.TextFormat::GREEN." Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
                         $player->getInventory()->setItemInHand($hand);
                         $player->getInventory()->sendContents($player);
                         return;
                     }else{
-                        $player->sendMessage(TextFormat::RED."[ENCHANT]".TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
+                        $player->sendMessage($enchanting.TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
                         return;
                     }
                 }
-                if(strpos($hand->getName(), "boots")){
+                if(stripos($hand->getName(), "boots")){
                     $rand[] = 0;
                     $rand[] = 1;
                     $rand[] = 2;
@@ -224,12 +240,12 @@ class FactionListener implements Listener {
                     if($player->getExpLevel() >= $plevel){
                         $player->takeExpLevel($plevel);
                         $hand->addEnchantment($enchant);
-                        $player->sendMessage(TextFormat::GREEN."[ENCHANT] Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
+                        $player->sendMessage($enchanting.TextFormat::GREEN."Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
                         $player->getInventory()->setItemInHand($hand);
                         $player->getInventory()->sendContents($player);
                         return;
                     }else{
-                        $player->sendMessage(TextFormat::RED."[ENCHANT]".TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
+                        $player->sendMessage($enchanting.TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
                         return;
                     }
                 }
@@ -245,15 +261,22 @@ class FactionListener implements Listener {
                 if($player->getExpLevel() >= $plevel){
                     $player->takeExpLevel($plevel);
                     $hand->addEnchantment($enchant);
-                    $player->sendMessage(TextFormat::GREEN."[ENCHANT] Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
+                    $player->sendMessage($enchanting.TextFormat::GREEN." Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
                     $player->getInventory()->setItemInHand($hand);
                     $player->getInventory()->sendContents($player);
                     return;
                 }else{
-                    $player->sendMessage(TextFormat::RED."[ENCHANT]".TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
+                    $player->sendMessage($enchanting.TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
                     return;
                 }
             }
+            $enchanting = TextFormat::LIGHT_PURPLE."[Enchanting]";
+                if($rank == false && !$player->isOp()){
+                    $player->sendMessage($enchanting.TextFormat::AQUA."Please Support the server To Get Full Enchanting Abillity!");
+                    $player->sendMessage($enchanting.TextFormat::AQUA."Buy Ranks from $5 at www.cyberechpp.com/MCPE");
+                    $player->sendMessage($enchanting.TextFormat::AQUA."Ranks activate immediately");
+                    return true;
+                }
             if($hand instanceof \pocketmine\item\Bow){
                 $rand[] = 19;
                 $rand[] = 20;
@@ -267,12 +290,12 @@ class FactionListener implements Listener {
                 if($player->getExpLevel() >= $plevel){
                     $player->takeExpLevel($plevel);
                     $hand->addEnchantment($enchant);
-                    $player->sendMessage(TextFormat::GREEN."[ENCHANT] Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
+                    $player->sendMessage($enchanting.TextFormat::GREEN." Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
                     $player->getInventory()->setItemInHand($hand);
                     $player->getInventory()->sendContents($player);
                     return;
                 }else{
-                    $player->sendMessage(TextFormat::RED."[ENCHANT]".TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
+                    $player->sendMessage($enchanting.TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
                     return;
                 }
             }
@@ -284,12 +307,12 @@ class FactionListener implements Listener {
                 if($player->getExpLevel() >= $plevel){
                     $player->takeExpLevel($plevel);
                     $hand->addEnchantment($enchant);
-                    $player->sendMessage(TextFormat::GREEN."[ENCHANT] Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
+                    $player->sendMessage($enchanting.TextFormat::GREEN." Your ".TextFormat::AQUA.$hand->getName().TextFormat::GREEN." was given Enchant ".TextFormat::LIGHT_PURPLE.$enchant->getName());
                     $player->getInventory()->setItemInHand($hand);
                     $player->getInventory()->sendContents($player);
                     return;
                 }else{
-                    $player->sendMessage(TextFormat::RED."[ENCHANT]".TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
+                    $player->sendMessage($enchanting.TextFormat::AQUA."$plevel Levels of XP".TextFormat::RED." was need in order to give your item ".TextFormat::LIGHT_PURPLE.$enchant->getName()."!");
                     return;
                 }
             }
@@ -390,6 +413,9 @@ class FactionListener implements Listener {
                 //if($rank == "Guest")$this->plugin->CC->yml["prefixs"][$player] = null;
                 if($rank == "Guest")$event->getPlayer()->setOp (false);
                 //$this->CC->yml["prefixs"][$player] = "§a".$rank;
+                if($a['claimed'] == 0){
+                    $event->getPlayer()->sendMessage(TextFormat::AQUA."Use /claim to Claim your Rank Rewards!");
+                }
            // }
         }
         
