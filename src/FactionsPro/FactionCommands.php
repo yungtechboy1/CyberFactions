@@ -33,6 +33,80 @@ class FactionCommands {
             echo $command->getName();
             $player = $sender->getName();
             switch($command->getName()){
+                case "claim":
+                    $time = strtotime("now");
+                    $rank = $this->plugin->GetRank($player);    
+                    if($rank == false || $rank == "Guest"){
+                        $sender->sendMessage(TextFormat::RED."You don't have a Rank!");
+                        $sender->sendMessage(TextFormat::AQUA."You can purchase ranks starting at $5 and Up!");
+                        $sender->sendMessage(TextFormat::AQUA."At CyberTechpp.com/MCPE");
+                        return true;
+                    }
+                    $a = @mysqli_fetch_assoc(@mysqli_query( $this->plugin->db2,"SELECT * FROM `ranks` WHERE `name` = '$player'"));
+                    if($a['claimed'] > 0){
+                        $sender->sendMessage(TextFormat::RED."You Claimed your Perks Already!!!");
+                        return true;
+                    }
+                    
+                    if($rank == "HERO" ||$rank == "VIP+" ||$rank == "VIP" ||$rank == "STEVE+" ||$rank == "HERO" ||$rank == "LEGEND"){
+                        foreach($this->plugin->prefs["ranks-rewards"][$rank] as $reward){
+                            $exp = explode("|",$reward);
+                            if($exp[0] == "money"){
+                                $this->plugin->api->addMoney($sender->getName(), $exp[1]);
+                            }elseif($exp[0] == "xp"){
+                                $this->plugin->getServer()->getPlayerExact($player)->addExperience($exp[1]);
+                            }else{
+                            $item = \pocketmine\item\Item::get($exp[0], $exp[1], $exp[2]);
+                            $inv = $this->plugin->getServer()->getPlayerExact($player)->getInventory();
+                            $inv->addItem(clone $item);
+                            }
+                        }
+                        $time = strtotime("now");
+                        $sender->sendMessage(TextFormat::GREEN."Kit Claimed!");
+                        @mysqli_query( $this->plugin->db2,"UPDATE `ranks` SET `claimed` = '$time' WHERE `name` = '$player'");
+                    }
+                    if(stripos($rank, "MONEY")){
+                        $amount = str_replace("MONEY", "" ,$rank);
+                        $money = $amount * 10000;
+                        $this->plugin->api->addMoney($sender->getName(), $money);
+                        $sender->sendMessage(TextFormat::GREEN."Kit Claimed!");
+                        @mysqli_query( $this->plugin->db2,"UPDATE `ranks` SET `claimed` = '$time' WHERE `name` = '$player'");
+                    }
+                    break;
+                case "kitclaim":
+                    $rank = $this->plugin->GetRank($player);    
+                    if($rank == false || $rank == "Guest"){
+                        $sender->sendMessage(TextFormat::RED."You don't have a Rank!");
+                        $sender->sendMessage(TextFormat::AQUA."You can purchase ranks starting at $5 and Up!");
+                        $sender->sendMessage(TextFormat::AQUA."At CyberTechpp.com/MCPE");
+                        return true;
+                    }
+                    $a = @mysqli_fetch_assoc(@mysqli_query( $this->plugin->db2,"SELECT * FROM `ranks` WHERE `name` = '$player'"));
+                    if($a['lastclaimed'] > strtotime("-24 Hour")){
+                        $sender->sendMessage(TextFormat::RED."You Claimed your Perks for the Day!!!\n Come Back Tomorrow!");
+                        return true;
+                    }
+                    
+                    if($rank == "HERO" ||$rank == "VIP+" || $rank == "VIP" ||$rank == "STEVE+" ||$rank == "HERO" ||$rank == "LEGEND"){
+                        foreach($this->plugin->prefs["kits"][$rank] as $reward){
+                            $exp = explode("|",$reward);
+                            if($exp[0] == "money"){
+                                $this->plugin->api->addMoney($sender->getName(), $exp[1]);
+                                continue;
+                            }
+                            if($exp[0] == "xp"){
+                                $this->plugin->getServer()->getPlayerExact($player)->addExperience($exp[1]);
+                                continue;
+                            }
+                            $item = \pocketmine\item\Item::get($exp[0], $exp[1], $exp[2]);
+                            $inv = $this->plugin->getServer()->getPlayerExact($player)->getInventory();
+                            $inv->addItem(clone $item);
+                        }
+                        $sender->sendMessage(TextFormat::GREEN."Kit Claimed!");
+                        $time = strtotime("now");
+                        @mysqli_query( $this->plugin->db2,"UPDATE `ranks` SET `lastclaimed` = `$time` WHERE `name` = '$player'");
+                    }
+                    break;
                 case "cban":
                     if(!$sender->isOp())return false;
                     if(!$args > 0){
@@ -112,12 +186,13 @@ class FactionCommands {
                     if(isset($args[0]) && $args[0] == "cc"){
                         if(!$sender->isOp())return false;
                         $this->plugin->chache = array();
-                        foreach ($this->main->getServer()->getLevels() as $level) {
+                        foreach ($this->plugin->getServer()->getLevels() as $level) {
                             foreach ($level->getEntities() as $e){
                                 if($e instanceof \pocketmine\Player)break;
                                 $e->kill();
                             }
                         }
+                        $this->plugin->prefs = (new Config($this->plugin->getDataFolder() . "Prefs.yml", CONFIG::YAML, array()))->getAll();
                         return true;
                     }
                     
