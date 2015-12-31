@@ -111,15 +111,7 @@ class FactionMain extends PluginBase implements Listener {
                 $this->experience_level = (new Config($this->getDataFolder() . "xpl.yml", CONFIG::YAML, array()))->getAll();
                 $this->level = (new Config($this->getDataFolder() . "level.yml", CONFIG::YAML, array()))->getAll();
                 $this->uuid = (new Config($this->getDataFolder() . "uuid.yml", CONFIG::YAML, array()))->getAll();
-		$this->prefs = (new Config($this->getDataFolder() . "Prefs.yml", CONFIG::YAML, array(
-                    "MaxFactionNameLength" => 20,
-                    "MaxPlayersPerFaction" => 10,
-                    "OnlyLeadersAndOfficersCanInvite" => true,
-                    "OfficersCanClaim" => true,
-                    "PlotPrice" => 100,
-                    "OfficerIdentifier" => '*',
-                    "LeaderIdentifier" => '**',
-		)))->getAll();
+		$this->prefs = (new Config($this->getDataFolder() . "Prefs.yml", CONFIG::YAML, array()))->getAll();
                 $this->getServer()->getScheduler()->scheduleRepeatingTask(new FactionTask($this), 20*60*2);
                 $this->wars = (new Config($this->getDataFolder() . "Wars.yml", CONFIG::YAML, array(
                     "ATTACKS" =>array(),
@@ -814,9 +806,6 @@ class FactionMain extends PluginBase implements Listener {
         }
 
         public function onDisable() {
-                $a = (new Config($this->getDataFolder() . "Prefs.yml", CONFIG::YAML));
-                $a->setAll($this->prefs);
-                $a->save();
                 $c = (new Config($this->getDataFolder() . "xp.yml", CONFIG::YAML));
                 $c->setAll($this->experience);
                 $c->save();
